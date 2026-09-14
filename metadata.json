@@ -1,0 +1,6 @@
+{
+  "name": "PULSE - Motoluv Analytics",
+  "description": "The pulse of Motoluv. Dashboard ejecutivo de analítica para Motoluv con métricas en tiempo real de PostgreSQL en Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

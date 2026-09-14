@@ -47,7 +47,14 @@ export interface ConnectionDiagnostic {
 let pool: pg.Pool | null = null;
 
 export function getDbConfig(): DbConfig {
-  const connectionString = process.env.PULSE_DATABASE_URL || process.env.DATABASE_URL;
+  const connectionString =
+    process.env.PULSE_DATABASE_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.SUPABASE_DB_URL;
+
   if (connectionString) {
     return {
       connectionString,
@@ -55,11 +62,11 @@ export function getDbConfig(): DbConfig {
     };
   }
 
-  const host = process.env.PULSE_DB_HOST || process.env.PGHOST;
-  const port = parseInt(process.env.PULSE_DB_PORT || process.env.PGPORT || '5432', 10);
-  const database = process.env.PULSE_DB_NAME || process.env.PGDATABASE || 'postgres';
-  const user = process.env.PULSE_DB_USER || process.env.PGUSER || 'pulse_readonly';
-  const password = process.env.PULSE_DB_PASSWORD || process.env.PGPASSWORD || '';
+  const host = process.env.PULSE_DB_HOST || process.env.PGHOST || process.env.POSTGRES_HOST;
+  const port = parseInt(process.env.PULSE_DB_PORT || process.env.PGPORT || process.env.POSTGRES_PORT || '5432', 10);
+  const database = process.env.PULSE_DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DATABASE || 'postgres';
+  const user = process.env.PULSE_DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'pulse_readonly';
+  const password = process.env.PULSE_DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '';
   const sslEnv = process.env.PULSE_DB_SSL || process.env.PGSSLMODE || 'true';
   const ssl = sslEnv === 'true' || sslEnv === 'require' ? { rejectUnauthorized: false } : false;
 

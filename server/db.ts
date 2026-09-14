@@ -8,6 +8,7 @@ export interface DbConfig {
   port?: number;
   database?: string;
   user?: string;
+  password?: string;
   ssl?: boolean | { rejectUnauthorized: boolean };
 }
 
@@ -46,6 +47,14 @@ export interface ConnectionDiagnostic {
 declare global {
   // eslint-disable-next-line no-var
   var __pulsePgPool: pg.Pool | undefined;
+}
+
+function safeDecode(val: string): string {
+  try {
+    return decodeURIComponent(val);
+  } catch {
+    return val;
+  }
 }
 
 /**
@@ -93,6 +102,8 @@ export function getDbConfig(): DbConfig {
   let port = 5432;
   let database = 'postgres';
   let user = 'pulse_readonly';
+  let password = '';
+  let ssl: boolean | { rejectUnauthorized: boolean } = { rejectUnauthorized: false };
 
   try {
     const parsed = new URL(connectionString);
@@ -100,14 +111,24 @@ export function getDbConfig(): DbConfig {
     port = parsed.port ? parseInt(parsed.port, 10) : 5432;
     database = parsed.pathname ? parsed.pathname.replace(/^\//, '') : 'postgres';
     if (parsed.username) {
-      user = decodeURIComponent(parsed.username);
+      user = safeDecode(parsed.username);
+    }
+    if (parsed.password) {
+      password = safeDecode(parsed.password);
+    }
+
+    const sslmode = (parsed.searchParams.get('sslmode') || '').toLowerCase();
+    if (sslmode === 'disable' || process.env.PGSSLMODE === 'disable') {
+      ssl = false;
+    } else {
+      // In Supabase and Vercel environments, sslmode=require is default.
+      // We explicitly enable SSL with rejectUnauthorized: false so Node TLS accepts
+      // the Supabase/RDS pooler TLS certificate without throwing SELF_SIGNED_CERT_IN_CHAIN.
+      ssl = { rejectUnauthorized: false };
     }
   } catch {
     // If URL parsing fails, retain defaults
   }
-
-  const isSslDisabled = connectionString.toLowerCase().includes('sslmode=disable');
-  const ssl = isSslDisabled ? false : { rejectUnauthorized: false };
 
   return {
     connectionString,
@@ -115,6 +136,7 @@ export function getDbConfig(): DbConfig {
     port,
     database,
     user,
+    password,
     ssl,
   };
 }
@@ -123,6 +145,8 @@ export function getDbConfig(): DbConfig {
  * Serverless-adapted PostgreSQL Pool for Vercel.
  * Preserves a single pool instance across warm invocations via globalThis.
  * Limits connection pool size to 1 to prevent exhausting connections across multiple serverless instances.
+ * Crucially, passes discrete options (host, port, database, user, password, ssl) instead of passing
+ * connectionString, preventing node-postgres from clobbering the ssl configuration.
  */
 export function getPool(): pg.Pool | null {
   const config = getDbConfig();
@@ -135,12 +159,13 @@ export function getPool(): pg.Pool | null {
     return globalThis.__pulsePgPool;
   }
 
-  const isSslDisabled = config.connectionString.toLowerCase().includes('sslmode=disable');
-  const ssl = isSslDisabled ? false : { rejectUnauthorized: false };
-
   const poolInstance = new Pool({
-    connectionString: config.connectionString,
-    ssl,
+    host: config.host,
+    port: config.port || 5432,
+    database: config.database || 'postgres',
+    user: config.user || 'pulse_readonly',
+    password: config.password,
+    ssl: config.ssl,
     max: 1, // Serverless-optimized: 1 connection per instance
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 5000,
@@ -148,6 +173,10 @@ export function getPool(): pg.Pool | null {
 
   poolInstance.on('error', (err) => {
     console.error('[PULSE DB] Unexpected idle client error:', err);
+    try {
+      poolInstance.end().catch(() => {});
+    } catch {}
+    globalThis.__pulsePgPool = undefined;
   });
 
   globalThis.__pulsePgPool = poolInstance;
@@ -195,6 +224,7 @@ export function classifyPgError(err: any): { type: ConnectionDiagnostic['errorTy
 
   if (
     code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+    code === 'SELF_SIGNED_CERT_IN_CHAIN' ||
     msg.includes('SSL') ||
     msg.includes('ssl') ||
     msg.includes('certificate') ||
@@ -266,7 +296,23 @@ export async function executeReadOnlyQuery<T = any>(
     throw new Error('No hay conexión configurada con la base de datos PostgreSQL (DATABASE_URL o POSTGRES_URL no configuradas).');
   }
 
-  // Execute purely the SELECT statement directly without session or transaction mutations
-  const res = await clientPool.query(text, params);
-  return res.rows;
+  try {
+    // Execute purely the SELECT statement directly without session or transaction mutations
+    const res = await clientPool.query(text, params);
+    return res.rows;
+  } catch (err: any) {
+    const msg = err?.message || '';
+    if (
+      msg.includes('Connection terminated') ||
+      msg.includes('Client has encountered a connection error') ||
+      err?.code === '57P01' ||
+      err?.code === 'ECONNRESET'
+    ) {
+      try {
+        clientPool.end().catch(() => {});
+      } catch {}
+      globalThis.__pulsePgPool = undefined;
+    }
+    throw err;
+  }
 }

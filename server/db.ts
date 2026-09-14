@@ -8,8 +8,7 @@ export interface DbConfig {
   port?: number;
   database?: string;
   user?: string;
-  password?: string;
-  ssl?: boolean | { rejectUnauthorized: boolean };
+  ssl?: boolean;
 }
 
 export interface ConnectionDiagnostic {
@@ -94,7 +93,7 @@ export function getDbConfig(): DbConfig {
       host: 'No configurado',
       port: 5432,
       database: 'postgres',
-      ssl: { rejectUnauthorized: false },
+      ssl: false,
     };
   }
 
@@ -102,8 +101,6 @@ export function getDbConfig(): DbConfig {
   let port = 5432;
   let database = 'postgres';
   let user = 'pulse_readonly';
-  let password = '';
-  let ssl: boolean | { rejectUnauthorized: boolean } = { rejectUnauthorized: false };
 
   try {
     const parsed = new URL(connectionString);
@@ -113,22 +110,11 @@ export function getDbConfig(): DbConfig {
     if (parsed.username) {
       user = safeDecode(parsed.username);
     }
-    if (parsed.password) {
-      password = safeDecode(parsed.password);
-    }
-
-    const sslmode = (parsed.searchParams.get('sslmode') || '').toLowerCase();
-    if (sslmode === 'disable' || process.env.PGSSLMODE === 'disable') {
-      ssl = false;
-    } else {
-      // In Supabase and Vercel environments, sslmode=require is default.
-      // We explicitly enable SSL with rejectUnauthorized: false so Node TLS accepts
-      // the Supabase/RDS pooler TLS certificate without throwing SELF_SIGNED_CERT_IN_CHAIN.
-      ssl = { rejectUnauthorized: false };
-    }
   } catch {
     // If URL parsing fails, retain defaults
   }
+
+  const isSslDisabled = connectionString.toLowerCase().includes('sslmode=disable');
 
   return {
     connectionString,
@@ -136,17 +122,14 @@ export function getDbConfig(): DbConfig {
     port,
     database,
     user,
-    password,
-    ssl,
+    ssl: !isSslDisabled,
   };
 }
 
 /**
  * Serverless-adapted PostgreSQL Pool for Vercel.
  * Preserves a single pool instance across warm invocations via globalThis.
- * Limits connection pool size to 1 to prevent exhausting connections across multiple serverless instances.
- * Crucially, passes discrete options (host, port, database, user, password, ssl) instead of passing
- * connectionString, preventing node-postgres from clobbering the ssl configuration.
+ * Direct connection using connectionString with serverless limits (max: 1).
  */
 export function getPool(): pg.Pool | null {
   const config = getDbConfig();
@@ -160,12 +143,7 @@ export function getPool(): pg.Pool | null {
   }
 
   const poolInstance = new Pool({
-    host: config.host,
-    port: config.port || 5432,
-    database: config.database || 'postgres',
-    user: config.user || 'pulse_readonly',
-    password: config.password,
-    ssl: config.ssl,
+    connectionString: config.connectionString,
     max: 1, // Serverless-optimized: 1 connection per instance
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 5000,

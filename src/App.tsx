@@ -166,7 +166,7 @@ export default function App() {
                       </div>
                       <p className="text-xs text-zinc-300 mt-1 max-w-2xl leading-relaxed">
                         {connection.errorMessage ||
-                          'PULSE está configurado para conectarse al usuario de solo lectura mediante variables de entorno seguras (PULSE_DB_HOST, PULSE_DB_PASSWORD). Conforme al mandato, no se muestran datos ficticios.'}
+                          'PULSE está configurado para conectarse al usuario de solo lectura mediante variables de entorno seguras (DATABASE_URL o POSTGRES_URL). Conforme al mandato, no se muestran datos ficticios.'}
                       </p>
                     </div>
                   </div>

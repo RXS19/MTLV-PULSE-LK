@@ -3,13 +3,12 @@ import pg from 'pg';
 const { Pool } = pg;
 
 export interface DbConfig {
+  connectionString?: string;
   host?: string;
   port?: number;
   database?: string;
   user?: string;
-  password?: string;
   ssl?: boolean | { rejectUnauthorized: boolean };
-  connectionString?: string;
 }
 
 export interface ConnectionDiagnostic {
@@ -44,64 +43,115 @@ export interface ConnectionDiagnostic {
   };
 }
 
-let pool: pg.Pool | null = null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __pulsePgPool: pg.Pool | undefined;
+}
+
+/**
+ * Extracts and validates connection string exclusively from DATABASE_URL or POSTGRES_URL.
+ * Rejects invalid non-URI strings.
+ */
+function getValidConnectionString(): string | null {
+  const candidates = [process.env.DATABASE_URL, process.env.POSTGRES_URL];
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if ((trimmed.startsWith('postgres://') || trimmed.startsWith('postgresql://')) && trimmed.includes('@')) {
+        return trimmed;
+      }
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed.startsWith('postgres://') || trimmed.startsWith('postgresql://')) {
+        return trimmed;
+      }
+    }
+  }
+
+  return null;
+}
 
 export function getDbConfig(): DbConfig {
-  const connectionString =
-    process.env.PULSE_DATABASE_URL ||
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.SUPABASE_DB_URL;
+  const connectionString = getValidConnectionString();
 
-  if (connectionString) {
+  if (!connectionString) {
     return {
-      connectionString,
+      user: 'pulse_readonly',
+      host: 'No configurado',
+      port: 5432,
+      database: 'postgres',
       ssl: { rejectUnauthorized: false },
     };
   }
 
-  const host = process.env.PULSE_DB_HOST || process.env.PGHOST || process.env.POSTGRES_HOST;
-  const port = parseInt(process.env.PULSE_DB_PORT || process.env.PGPORT || process.env.POSTGRES_PORT || '5432', 10);
-  const database = process.env.PULSE_DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DATABASE || 'postgres';
-  const user = process.env.PULSE_DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'pulse_readonly';
-  const password = process.env.PULSE_DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '';
-  const sslEnv = process.env.PULSE_DB_SSL || process.env.PGSSLMODE || 'true';
-  const ssl = sslEnv === 'true' || sslEnv === 'require' ? { rejectUnauthorized: false } : false;
+  let host = 'PostgreSQL Host';
+  let port = 5432;
+  let database = 'postgres';
+  let user = 'pulse_readonly';
+
+  try {
+    const parsed = new URL(connectionString);
+    host = parsed.hostname || host;
+    port = parsed.port ? parseInt(parsed.port, 10) : 5432;
+    database = parsed.pathname ? parsed.pathname.replace(/^\//, '') : 'postgres';
+    if (parsed.username) {
+      user = decodeURIComponent(parsed.username);
+    }
+  } catch {
+    // If URL parsing fails, retain defaults
+  }
+
+  const isSslDisabled = connectionString.toLowerCase().includes('sslmode=disable');
+  const ssl = isSslDisabled ? false : { rejectUnauthorized: false };
 
   return {
+    connectionString,
     host,
     port,
     database,
     user,
-    password,
     ssl,
   };
 }
 
+/**
+ * Serverless-adapted PostgreSQL Pool for Vercel.
+ * Preserves a single pool instance across warm invocations via globalThis.
+ * Limits connection pool size to 1 to prevent exhausting connections across multiple serverless instances.
+ */
 export function getPool(): pg.Pool | null {
   const config = getDbConfig();
 
-  // If host and connection string are not configured, return null
-  if (!config.connectionString && (!config.host || !config.password)) {
+  if (!config.connectionString) {
     return null;
   }
 
-  if (!pool) {
-    pool = new Pool({
-      ...config,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 6000,
-    });
-
-    pool.on('error', (err) => {
-      console.error('Unexpected error on idle client', err);
-    });
+  if (globalThis.__pulsePgPool) {
+    return globalThis.__pulsePgPool;
   }
 
-  return pool;
+  const isSslDisabled = config.connectionString.toLowerCase().includes('sslmode=disable');
+  const ssl = isSslDisabled ? false : { rejectUnauthorized: false };
+
+  const poolInstance = new Pool({
+    connectionString: config.connectionString,
+    ssl,
+    max: 1, // Serverless-optimized: 1 connection per instance
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000,
+  });
+
+  poolInstance.on('error', (err) => {
+    console.error('[PULSE DB] Unexpected idle client error:', err);
+  });
+
+  globalThis.__pulsePgPool = poolInstance;
+  return poolInstance;
 }
 
 export function classifyPgError(err: any): { type: ConnectionDiagnostic['errorType']; message: string } {
@@ -111,21 +161,21 @@ export function classifyPgError(err: any): { type: ConnectionDiagnostic['errorTy
   if (code === 'ENOTFOUND' || msg.includes('getaddrinfo ENOTFOUND')) {
     return {
       type: 'HOST_UNREACHABLE',
-      message: 'Host inaccesible: no se pudo resolver el host de Supabase especificado.',
+      message: 'Host inaccesible: no se pudo resolver el host de la base de datos.',
     };
   }
 
   if (code === 'ECONNREFUSED' || msg.includes('ECONNREFUSED')) {
     return {
       type: 'PORT_INCORRECT',
-      message: 'Puerto o host incorrecto: conexión rechazada en el puerto especificado.',
+      message: 'Puerto o host incorrecto: conexión rechazada en el servidor PostgreSQL.',
     };
   }
 
   if (code === 'ETIMEDOUT' || msg.includes('timeout') || msg.includes('ETIMEDOUT')) {
     return {
       type: 'HOST_UNREACHABLE',
-      message: 'Tiempo de espera agotado al conectar al servidor PostgreSQL de Supabase.',
+      message: 'Tiempo de espera agotado al conectar al servidor PostgreSQL.',
     };
   }
 
@@ -152,7 +202,7 @@ export function classifyPgError(err: any): { type: ConnectionDiagnostic['errorTy
   ) {
     return {
       type: 'SSL_INCOMPATIBLE',
-      message: 'SSL incompatible: error en la negociación SSL con el pooler de Supabase.',
+      message: 'SSL incompatible: error en la negociación SSL con el servidor PostgreSQL.',
     };
   }
 
@@ -213,7 +263,7 @@ export async function executeReadOnlyQuery<T = any>(
 
   const clientPool = getPool();
   if (!clientPool) {
-    throw new Error('No hay conexión configurada con la base de datos PostgreSQL de Supabase.');
+    throw new Error('No hay conexión configurada con la base de datos PostgreSQL (DATABASE_URL o POSTGRES_URL no configuradas).');
   }
 
   // Execute purely the SELECT statement directly without session or transaction mutations

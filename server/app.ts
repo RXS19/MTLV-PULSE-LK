@@ -19,8 +19,7 @@ export function createExpressApp() {
   // Connection diagnostics (Direct isolated SELECT on authorized tables)
   app.get('/api/connection', async (req, res) => {
     const config = getDbConfig();
-    const hasHost = Boolean(config.host || config.connectionString);
-    const hasPassword = Boolean(config.password || config.connectionString);
+    const hasConnectionString = Boolean(config.connectionString);
 
     const tablesVerified = {
       users: false,
@@ -30,19 +29,19 @@ export function createExpressApp() {
       operation_tracking: false,
     };
 
-    if (!hasHost || !hasPassword) {
+    if (!hasConnectionString) {
       return res.json({
         connected: false,
         status: 'disconnected',
         source: 'PostgreSQL DB',
         user: config.user || 'pulse_readonly',
         database: config.database || 'postgres',
-        host: config.host || 'aws-0-us-east-1.pooler.supabase.com',
+        host: config.host || 'No configurado',
         port: config.port || 5432,
         ssl: Boolean(config.ssl),
         lastChecked: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }),
         errorType: 'MISSING_CREDENTIALS',
-        errorMessage: 'Faltan credenciales de conexión en variables de entorno (PULSE_DB_HOST, PULSE_DB_PASSWORD o DATABASE_URL).',
+        errorMessage: 'Faltan credenciales de conexión en variables de entorno (DATABASE_URL o POSTGRES_URL).',
         tablesVerified,
       });
     }
@@ -82,7 +81,7 @@ export function createExpressApp() {
         source: 'PostgreSQL DB',
         user: config.user || 'pulse_readonly',
         database: config.database || 'postgres',
-        host: config.host || 'aws-0-us-east-1.pooler.supabase.com',
+        host: config.host || 'PostgreSQL Host',
         port: config.port || 5432,
         ssl: Boolean(config.ssl),
         lastChecked: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }),
@@ -100,7 +99,7 @@ export function createExpressApp() {
         source: 'PostgreSQL DB',
         user: config.user || 'pulse_readonly',
         database: config.database || 'postgres',
-        host: config.host || 'aws-0-us-east-1.pooler.supabase.com',
+        host: config.host || 'PostgreSQL Host',
         port: config.port || 5432,
         ssl: Boolean(config.ssl),
         lastChecked: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }),

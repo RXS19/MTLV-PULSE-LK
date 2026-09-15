@@ -271,39 +271,51 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Hero Visual Section with Sports Motorcycle Background (focused element) */}
       <div
         id="pulse-hero-banner"
-        className="relative overflow-hidden border-b border-[#181c24] px-4 sm:px-8 py-6 sm:py-7 bg-cover bg-center bg-no-repeat transition-all duration-300"
-        style={{ backgroundImage: "url('/images/sports-motorcycle-bg.jpg')" }}
+        className="relative overflow-hidden border-b border-[#181c24] px-4 sm:px-8 py-8 sm:py-10 min-h-[175px] sm:min-h-[195px] lg:min-h-[215px] flex items-center bg-[#08090c] transition-all duration-300"
       >
-        {/* Cinematic dark studio gradient overlays to ensure 100% WCAG AA contrast for text */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f]/95 via-[#0c0e14]/80 to-[#080a0f]/92 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08090c] via-transparent to-[#08090c]/60 pointer-events-none" />
-        {/* Subtle red spotlight glow */}
-        <div className="absolute -top-16 left-1/4 w-96 h-48 bg-red-600/15 blur-[90px] rounded-full pointer-events-none" />
+        {/* Motorcycle background visual - dimensioned and positioned so the front and headlights are crystal clear */}
+        <div className="absolute inset-y-0 right-0 w-full sm:w-[75%] md:w-[65%] lg:w-[55%] flex items-center justify-center md:justify-end overflow-hidden pointer-events-none">
+          <img
+            src="/images/mercado-banner-bg.jpg"
+            alt="Motocicleta deportiva"
+            className="h-full w-full object-cover object-[center_30%] sm:object-[center_35%] filter brightness-95 contrast-105"
+          />
+          {/* Smooth left-to-right fade so motorcycle emerges seamlessly from deep black studio */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#08090c] via-[#08090c]/70 via-30% to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#08090c]/80 via-transparent to-[#08090c]/60 pointer-events-none" />
+        </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
+        {/* Text readability shadow overlay on the left */}
+        <div className="absolute inset-y-0 left-0 w-full sm:w-1/2 bg-gradient-to-r from-[#08090c] via-[#08090c]/95 to-transparent pointer-events-none z-0" />
+
+        <div className="relative z-10 w-full flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2 mb-2">
               <MotoluvIsotype className="w-4 h-4 shrink-0 drop-shadow-[0_0_8px_rgba(238,28,37,0.8)]" />
-              <span className="text-[10px] font-extrabold tracking-[0.2em] text-red-500 uppercase font-tech">
+              <span className="text-[11px] font-extrabold tracking-[0.2em] text-red-500 uppercase font-tech">
                 MOTOLUV ANALYTICS
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wider uppercase font-display italic drop-shadow-md">
-              MERCADO EN MOVIMIENTO
+            <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-white tracking-wider uppercase font-display italic leading-none drop-shadow-md">
+              EL MERCADO
+              <br />
+              EN MOVIMIENTO
             </h1>
+
+            <p className="text-xs sm:text-sm text-zinc-300 mt-2.5 font-normal tracking-normal max-w-md">
+              Visión ejecutiva para decisiones que aceleran.
+            </p>
           </div>
 
-          {/* Right Brand Pillar Tag */}
-          <div className="hidden sm:flex flex-col items-end">
-            <div className="flex items-center gap-3 text-xs font-bold tracking-widest text-zinc-300 font-tech">
+          {/* Right Brand Pillar Tag matching reference image IMG_7692.jpeg */}
+          <div className="hidden sm:flex flex-col items-end text-right">
+            <div className="flex flex-col gap-1 text-xs font-bold tracking-widest text-zinc-300 font-tech">
               <span>CONFIANZA</span>
-              <span className="text-zinc-400">•</span>
               <span>DATOS</span>
-              <span className="text-zinc-400">•</span>
               <span>MOVIMIENTO</span>
             </div>
-            <div className="w-28 h-1 bg-gradient-to-r from-transparent via-red-600 to-red-500 rounded-full mt-2 shadow-[0_0_8px_rgba(255,30,39,0.8)]"></div>
+            <div className="w-6 h-0.5 bg-red-600 rounded-full mt-2 self-end shadow-[0_0_8px_rgba(255,30,39,0.8)]" />
           </div>
         </div>
       </div>

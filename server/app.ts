@@ -7,8 +7,19 @@ export function createExpressApp() {
 
   app.use(express.json());
 
+  // Permissive CORS for diagnostics and API consumers
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Health / Service check
-  app.get('/api/health', (req, res) => {
+  app.get(['/api/health', '/health'], (req, res) => {
     res.json({
       status: 'ok',
       service: 'PULSE Motoluv Analytics Engine',
@@ -17,7 +28,7 @@ export function createExpressApp() {
   });
 
   // Connection diagnostics (Direct isolated SELECT on authorized tables)
-  app.get('/api/connection', async (req, res) => {
+  app.get(['/api/connection', '/connection'], async (req, res) => {
     const config = getDbConfig();
     const hasConnectionString = Boolean(config.connectionString);
 
@@ -110,13 +121,22 @@ export function createExpressApp() {
     }
   });
 
-  // Main Dashboard Metrics endpoint
-  app.get('/api/dashboard-metrics', async (req, res) => {
+  // Main Dashboard Metrics endpoint (supports /api/dashboard-metrics, /dashboard-metrics, and common aliases)
+  const dashboardRoutes = [
+    '/api/dashboard-metrics',
+    '/dashboard-metrics',
+    '/api/dashboard_metrics',
+    '/dashboard_metrics',
+    '/api/metrics',
+    '/metrics',
+  ];
+
+  const handleDashboardMetrics = async (req: express.Request, res: express.Response) => {
     try {
       const filters = {
-        period: typeof req.query.period === 'string' ? req.query.period : undefined,
-        brand: typeof req.query.brand === 'string' ? req.query.brand : undefined,
-        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        period: typeof req.query.period === 'string' ? req.query.period : typeof req.body?.period === 'string' ? req.body.period : undefined,
+        brand: typeof req.query.brand === 'string' ? req.query.brand : typeof req.body?.brand === 'string' ? req.body.brand : undefined,
+        status: typeof req.query.status === 'string' ? req.query.status : typeof req.body?.status === 'string' ? req.body.status : undefined,
       };
       const metrics = await fetchDashboardMetrics(filters);
       res.json(metrics);
@@ -128,7 +148,10 @@ export function createExpressApp() {
         errorType: classified.type,
       });
     }
-  });
+  };
+
+  app.get(dashboardRoutes, handleDashboardMetrics);
+  app.post(dashboardRoutes, handleDashboardMetrics);
 
   return app;
 }

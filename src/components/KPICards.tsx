@@ -1,13 +1,9 @@
 import React from 'react';
 import {
   Users,
-  Bike,
   FileText,
   Tag,
-  CheckCircle,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus,
+  CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
 import { KPIValue } from '../types.js';
@@ -27,6 +23,35 @@ interface CardConfig {
   data: KPIValue;
 }
 
+// Crisp motorcycle SVG icon matching the exact icon in the user's reference image
+const MotorcycleIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8 text-white' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    {/* Rear wheel */}
+    <circle cx="5.5" cy="16" r="3.2" />
+    <circle cx="5.5" cy="16" r="0.9" fill="currentColor" />
+    {/* Front wheel */}
+    <circle cx="18.5" cy="16" r="3.2" />
+    <circle cx="18.5" cy="16" r="0.9" fill="currentColor" />
+    {/* Frame / Engine block */}
+    <path d="M5.5 16h3.2l2.3-4.2h4.2l1.8 4.2h1.5" />
+    <path d="M10 11.8h4" />
+    {/* Fuel tank & seat */}
+    <path d="M7 11.5c1.2-1.2 2.8-1.5 4.5-1.5h1.8l1.8-3.2h2.2" />
+    {/* Handlebars */}
+    <path d="M15.5 6.8l1.3-1.3h2" />
+    {/* Headlight */}
+    <circle cx="19" cy="8.6" r="0.7" fill="currentColor" />
+  </svg>
+);
+
 export const KPICards: React.FC<KPICardsProps> = ({
   users,
   inventory,
@@ -38,163 +63,171 @@ export const KPICards: React.FC<KPICardsProps> = ({
     {
       id: 'kpi-users',
       title: 'USUARIOS REGISTRADOS',
-      icon: <Users className="w-4 h-4 text-zinc-400" />,
+      icon: <Users className="w-7 h-7 text-white stroke-[1.8]" />,
       data: users,
     },
     {
       id: 'kpi-inventory',
       title: 'MOTOS EN INVENTARIO',
-      icon: <Bike className="w-4 h-4 text-zinc-400" />,
+      icon: <MotorcycleIcon className="w-7 h-7 text-white" />,
       data: inventory,
     },
     {
       id: 'kpi-apartados',
       title: 'APARTADOS',
-      icon: <FileText className="w-4 h-4 text-zinc-400" />,
+      icon: <FileText className="w-7 h-7 text-white stroke-[1.8]" />,
       data: apartados,
     },
     {
       id: 'kpi-offers',
       title: 'OFERTAS',
-      icon: <Tag className="w-4 h-4 text-zinc-400" />,
+      icon: <Tag className="w-7 h-7 text-white stroke-[1.8]" />,
       data: offers,
     },
     {
       id: 'kpi-deliveries',
       title: 'ENTREGAS',
-      icon: <CheckCircle className="w-4 h-4 text-zinc-400" />,
+      icon: <CheckCircle2 className="w-7 h-7 text-white stroke-[1.8]" />,
       data: deliveries,
     },
   ];
 
   return (
     <section id="pulse-kpis" className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
         {cards.map((card) => {
           const { data } = card;
+          const isUp =
+            data.trend === 'up' ||
+            (data.changePercent !== null && data.changePercent > 0);
+          const isDown =
+            data.trend === 'down' ||
+            (data.changePercent !== null && data.changePercent < 0);
 
           return (
             <div
               key={card.id}
               id={card.id}
-              className="relative overflow-hidden bg-[#111318] hover:bg-[#151820] border border-[#1f242e] hover:border-[#2a313e] rounded-xl p-4 transition-all duration-200 flex flex-col justify-between shadow-sm group"
+              className="relative overflow-hidden bg-[#0d0f14] hover:bg-[#11131a] border border-white/10 hover:border-white/20 rounded-2xl p-4 sm:p-4.5 transition-all duration-200 flex items-center gap-3.5 sm:gap-4 shadow-xl group"
             >
-              {/* Header: Icon & Title */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="p-1.5 rounded-lg bg-[#181b22] border border-[#262b36] group-hover:border-red-500/30 transition-colors">
-                  {card.icon}
-                </span>
-                <span className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase truncate">
-                  {card.title}
-                </span>
+              {/* Left Rounded Dark Icon Box */}
+              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#181b22] border border-white/5 flex items-center justify-center shrink-0 shadow-inner group-hover:bg-[#1e222b] transition-colors">
+                {card.icon}
               </div>
 
-              {/* Main Content */}
-              {data.isAvailable ? (
-                <div className="mt-1">
-                  {/* Big Number */}
-                  <div className="text-2xl lg:text-3xl font-black text-white tracking-tight font-display">
-                    {data.total.toLocaleString('es-MX')}
-                  </div>
+              {/* Right Content Area */}
+              <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
+                {/* Top Label */}
+                <span className="text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 uppercase truncate block">
+                  {card.title}
+                </span>
 
-                  {/* Variation & Dynamic Sparkline */}
-                  <div className="flex items-end justify-between mt-2 pt-1 border-t border-[#1a1d25]">
-                    {/* Variation text */}
-                    <div className="flex items-center gap-1 text-[11px] font-medium">
-                      {data.changePercent !== null ? (
-                        <>
-                          {(data.trend === 'up' || (data.changePercent !== null && data.changePercent > 0)) && (
-                            <span className="flex items-center text-emerald-400 font-bold">
-                              <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-                              +{data.changePercent}%
-                            </span>
-                          )}
-                          {(data.trend === 'down' || (data.changePercent !== null && data.changePercent < 0)) && (
-                            <span className="flex items-center text-rose-400 font-bold">
-                              <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />
-                              {data.changePercent}%
-                            </span>
-                          )}
-                          {data.trend === 'neutral' || data.changePercent === 0 ? (
-                            <span className="flex items-center text-zinc-400 font-bold">
-                              <Minus className="w-3.5 h-3.5 mr-0.5" />
-                              0%
-                            </span>
-                          ) : null}
-                        </>
-                      ) : (
-                        <span className="text-zinc-400 font-medium">N/A</span>
-                      )}
-                      <span className="text-zinc-400 text-[10px] truncate">vs. periodo anterior</span>
+                {data.isAvailable ? (
+                  <>
+                    {/* Big Numeric Value */}
+                    <div className="text-2xl sm:text-3xl font-black text-white tracking-tight font-sans leading-none my-1">
+                      {data.total.toLocaleString('es-MX')}
                     </div>
 
-                    {/* Dynamic Trend Sparkline */}
-                    {(() => {
-                      const isUp =
-                        data.trend === 'up' ||
-                        (data.changePercent !== null && data.changePercent > 0);
-                      const isDown =
-                        data.trend === 'down' ||
-                        (data.changePercent !== null && data.changePercent < 0);
-
-                      const strokeColor = isUp ? '#10b981' : isDown ? '#ef4444' : '#71717a';
-                      const dropShadowClass = isUp
-                        ? 'drop-shadow-[0_0_4px_rgba(16,185,129,0.8)]'
-                        : isDown
-                        ? 'drop-shadow-[0_0_4px_rgba(239,68,68,0.8)]'
-                        : 'drop-shadow-[0_0_2px_rgba(113,113,122,0.4)]';
-
-                      const pathD = isUp
-                        ? 'M 2 16 C 14 15, 24 9, 34 6 S 44 4, 48 3'
-                        : isDown
-                        ? 'M 2 4 C 14 5, 24 11, 34 14 S 44 16, 48 17'
-                        : 'M 2 10 L 48 10';
-
-                      const circleY = isUp ? 3 : isDown ? 17 : 10;
-
-                      return (
-                        <div
-                          className="w-12 h-5 shrink-0 opacity-85 group-hover:opacity-100 transition-opacity"
-                          title={
-                            isUp
-                              ? `Tendencia al alza (+${data.changePercent ?? 0}%)`
-                              : isDown
-                              ? `Tendencia a la baja (${data.changePercent ?? 0}%)`
-                              : 'Tendencia neutral (0%)'
-                          }
-                        >
-                          <svg viewBox="0 0 50 20" className="w-full h-full overflow-visible">
-                            <path
-                              d={pathD}
-                              fill="none"
-                              stroke={strokeColor}
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              className={dropShadowClass}
-                            />
-                            <circle
-                              cx="48"
-                              cy={circleY}
-                              r={isUp || isDown ? '2.5' : '1.5'}
-                              fill={strokeColor}
-                              className={isUp || isDown ? 'animate-pulse' : ''}
-                            />
-                          </svg>
+                    {/* Bottom Row: Trend and Red/Blue Sparkline */}
+                    <div className="flex items-center justify-between gap-2 mt-1 relative">
+                      {/* Left: Arrow + Percentage and "vs. período anterior" */}
+                      <div className="flex flex-col min-w-0 pr-1">
+                        <div className="flex items-center gap-1 font-bold text-xs sm:text-sm">
+                          {data.changePercent !== null ? (
+                            isUp ? (
+                              <span className="text-blue-400 flex items-center font-extrabold">
+                                <span className="mr-0.5 text-base leading-none">↑</span>
+                                {Math.abs(data.changePercent)}%
+                              </span>
+                            ) : isDown ? (
+                              <span className="text-red-500 flex items-center font-extrabold">
+                                <span className="mr-0.5 text-base leading-none">↓</span>
+                                {Math.abs(data.changePercent)}%
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 flex items-center font-bold">
+                                <span className="mr-0.5">−</span>
+                                0.0%
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-zinc-400 text-xs font-medium">N/A</span>
+                          )}
                         </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-2 pt-2 border-t border-[#1a1d25]">
-                  <div className="flex items-start gap-2 text-zinc-400 text-xs" title={data.unavailableMessage}>
-                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                        <span className="text-[10px] sm:text-[11px] text-zinc-400 font-normal leading-tight mt-0.5 truncate">
+                          vs. período anterior
+                        </span>
+                      </div>
+
+                      {/* Right: Dynamic Wave Sparkline (Centered vertically, constrained so it never overlaps any text) */}
+                      {(() => {
+                        const strokeColor = isUp ? '#3b82f6' : isDown ? '#ef4444' : '#71717a';
+                        const glowColor = isUp
+                          ? 'drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]'
+                          : isDown
+                          ? 'drop-shadow-[0_0_4px_rgba(239,68,68,0.6)]'
+                          : '';
+
+                        const linePath = isDown
+                          ? 'M 0 6 L 8 10 L 15 8 L 26 16 L 35 14 L 46 22 L 56 20 L 68 28 L 73 27 L 80 32'
+                          : isUp
+                          ? 'M 0 30 L 8 26 L 15 28 L 26 20 L 35 22 L 46 14 L 56 16 L 68 8 L 73 9 L 80 4'
+                          : 'M 0 18 L 80 18';
+
+                        const fillPath = isDown
+                          ? 'M 0 6 L 8 10 L 15 8 L 26 16 L 35 14 L 46 22 L 56 20 L 68 28 L 73 27 L 80 32 L 80 36 L 0 36 Z'
+                          : isUp
+                          ? 'M 0 30 L 8 26 L 15 28 L 26 20 L 35 22 L 46 14 L 56 16 L 68 8 L 73 9 L 80 4 L 80 36 L 0 36 Z'
+                          : 'M 0 18 L 80 18 L 80 36 L 0 36 Z';
+
+                        return (
+                          <div className="w-14 sm:w-16 h-7 sm:h-8 shrink-0 relative flex items-center justify-center self-center overflow-hidden ml-auto rounded">
+                            <svg
+                              viewBox="0 0 80 36"
+                              className="w-full h-full block"
+                              preserveAspectRatio="none"
+                            >
+                              <defs>
+                                <linearGradient
+                                  id={`kpi-spark-grad-${card.id}`}
+                                  x1="0"
+                                  y1="0"
+                                  x2="0"
+                                  y2="1"
+                                >
+                                  <stop offset="0%" stopColor={strokeColor} stopOpacity="0.45" />
+                                  <stop offset="60%" stopColor={strokeColor} stopOpacity="0.12" />
+                                  <stop offset="100%" stopColor={strokeColor} stopOpacity="0.0" />
+                                </linearGradient>
+                              </defs>
+                              {/* Gradient Fill under the curve */}
+                              <path d={fillPath} fill={`url(#kpi-spark-grad-${card.id})`} />
+                              {/* Main Stroke */}
+                              <path
+                                d={linePath}
+                                fill="none"
+                                stroke={strokeColor}
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className={glowColor}
+                              />
+                            </svg>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-1 flex items-start gap-1.5 text-zinc-400 text-xs">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-[10px] text-zinc-400 leading-tight">
-                      {data.unavailableMessage || 'Métrica no disponible con la estructura actual de datos.'}
+                      {data.unavailableMessage || 'Sin datos disponibles'}
                     </p>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

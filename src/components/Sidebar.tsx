@@ -80,17 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id="pulse-sidebar"
         className={`relative hidden md:flex md:flex-col justify-between shrink-0 select-none min-h-screen transition-all duration-300 ease-in-out z-30 ${
           isCollapsed ? 'w-18' : 'w-64'
-        } bg-[#0a0c10]/40 backdrop-blur-xl border-r border-white/5`}
+        } bg-transparent border-r border-white/10`}
       >
-        {/* Subtle sports motorcycle silhouette with soft atmospheric blend */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-15 mix-blend-luminosity transform scale-105 transition-all duration-500"
-          style={{ backgroundImage: "url('/images/sports-motorcycle-bg.jpg')" }}
-        />
-        {/* Soft translucent dark studio overlays for seamless site integration */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0c10]/60 via-[#0c0e14]/40 to-[#07080a]/65 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/30 pointer-events-none" />
-
         {/* Main Content Area in Sidebar */}
         <div className="relative z-10">
           {/* Top Branding Bar */}

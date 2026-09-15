@@ -144,6 +144,7 @@ export function getPool(): pg.Pool | null {
 
   const poolInstance = new Pool({
     connectionString: config.connectionString,
+    ssl: { rejectUnauthorized: false },
     max: 1, // Serverless-optimized: 1 connection per instance
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 5000,

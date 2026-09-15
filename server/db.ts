@@ -127,6 +127,22 @@ export function getDbConfig(): DbConfig {
 }
 
 /**
+ * Custom PostgreSQL client that ensures Supabase Pooler SSL negotiation
+ * is accepted with rejectUnauthorized: false even when connectionString has sslmode=require.
+ */
+class SupabaseClient extends pg.Client {
+  constructor(config?: any) {
+    super(config);
+    if ((this as any).ssl !== false && (this as any).connectionParameters?.ssl !== false) {
+      if (this.connection) {
+        (this.connection as any).ssl = { rejectUnauthorized: false };
+      }
+      (this as any).ssl = { rejectUnauthorized: false };
+    }
+  }
+}
+
+/**
  * Serverless-adapted PostgreSQL Pool for Vercel.
  * Preserves a single pool instance across warm invocations via globalThis.
  * Direct connection using connectionString with serverless limits (max: 1).
@@ -148,6 +164,7 @@ export function getPool(): pg.Pool | null {
     max: 1, // Serverless-optimized: 1 connection per instance
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 5000,
+    Client: SupabaseClient,
   });
 
   poolInstance.on('error', (err) => {

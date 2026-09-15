@@ -10,7 +10,7 @@ export const FooterValues: React.FC = () => {
     },
     {
       title: 'TRANSPARENCIA',
-      desc: 'Información clara en cada paso.',
+      desc: 'Claridad en cada paso.',
       icon: <User className="w-5 h-5 text-zinc-200 stroke-[1.8]" />,
     },
     {
@@ -58,22 +58,22 @@ export const FooterValues: React.FC = () => {
         </div>
 
         {/* Center Values Grid with subtle dividers */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 divide-y sm:divide-y-0 lg:divide-x divide-zinc-800/80">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 divide-y sm:divide-y-0 lg:divide-x divide-zinc-800/80 gap-y-2">
           {values.map((v, i) => (
             <div
               key={i}
-              className={`flex items-center gap-3 py-2 sm:py-0 ${
-                i === 0 ? 'lg:pl-2 lg:pr-4' : 'lg:px-4'
+              className={`flex items-start sm:items-center gap-2.5 py-2 sm:py-1 ${
+                i === 0 ? 'lg:pl-2 lg:pr-3' : 'lg:px-3'
               }`}
             >
-              <div className="shrink-0 p-1 rounded text-zinc-300">
+              <div className="shrink-0 p-1 rounded text-zinc-300 mt-0.5 sm:mt-0">
                 {v.icon}
               </div>
-              <div className="min-w-0">
-                <h5 className="text-[11px] font-black tracking-wider text-white uppercase font-display leading-tight">
+              <div className="min-w-0 flex-1">
+                <h5 className="text-[11px] font-black tracking-wider text-white uppercase font-display leading-tight truncate">
                   {v.title}
                 </h5>
-                <p className="text-[10px] sm:text-[11px] text-zinc-400 font-normal leading-tight mt-0.5 whitespace-nowrap">
+                <p className="text-[10px] sm:text-[11px] text-zinc-400 font-normal leading-snug mt-0.5 break-words">
                   {v.desc}
                 </p>
               </div>

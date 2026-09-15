@@ -71,15 +71,15 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header id="pulse-header" className="w-full">
       {/* Top Bar with Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4 py-4 px-8 border-b border-[#181c24] bg-[#0c0e12]/80 backdrop-blur-md sticky top-0 z-20">
+      <div className="flex flex-wrap items-center justify-between gap-3 py-3 sm:py-4 px-4 sm:px-8 border-b border-[#181c24] bg-[#0c0e12]/80 backdrop-blur-md sticky top-0 z-20">
         {/* Filters Row */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Header Motoluv Brand / Menu Toggle */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          {/* Header Motoluv Brand / Menu Toggle (desktop sidebar toggle) */}
           <button
             id="header-sidebar-toggle-btn"
             type="button"
             onClick={onToggleSidebar}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171f] hover:bg-[#1a1e29] border border-[#232836] text-zinc-200 hover:text-white transition-all text-xs font-semibold shadow-xs group cursor-pointer"
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171f] hover:bg-[#1a1e29] border border-[#232836] text-zinc-200 hover:text-white transition-all text-xs font-semibold shadow-xs group cursor-pointer"
             title={isSidebarCollapsed ? 'Expandir menú lateral' : 'Contraer menú (Pantalla completa)'}
           >
             <MotoluvIsotype className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
@@ -90,6 +90,12 @@ export const Header: React.FC<HeaderProps> = ({
               <PanelLeftClose className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-400 transition-colors ml-0.5" />
             )}
           </button>
+
+          {/* Mobile Brand Logo */}
+          <div className="md:hidden flex items-center gap-1.5 mr-1">
+            <MotoluvIsotype withBackground={true} className="w-5 h-5" />
+            <span className="text-sm font-black tracking-wider text-white font-display">MOTOLUV</span>
+          </div>
 
           {/* Period Filter */}
           <div
@@ -262,33 +268,28 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Hero Visual Section matching the reference image */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0d0f14] via-[#10131a] to-[#0d0f14] border-b border-[#181c24] px-8 py-7">
-        {/* Abstract dark motorcycle headlight & red glow backdrop */}
-        <div className="absolute inset-0 pointer-events-none">
-          {/* Subtle red spotlight glow */}
-          <div className="absolute -top-16 left-1/3 w-96 h-48 bg-red-600/10 blur-[100px] rounded-full"></div>
-          {/* Motorcycle silhouette / speed lines accent */}
-          <div className="absolute top-0 right-0 h-full w-1/2 opacity-25 overflow-hidden flex justify-end">
-            <svg viewBox="0 0 600 200" className="h-full w-auto text-zinc-700 fill-none stroke-current" strokeWidth="1">
-              <path d="M 100 180 L 250 80 L 450 60 L 580 180" stroke="#ff1e27" strokeWidth="2" opacity="0.4" />
-              <path d="M 280 85 L 420 70 L 520 180" stroke="#ffffff" strokeWidth="1" opacity="0.2" />
-              <circle cx="500" cy="140" r="40" stroke="#333846" strokeWidth="2" />
-              <circle cx="200" cy="150" r="30" stroke="#333846" strokeWidth="2" />
-            </svg>
-          </div>
-        </div>
+      {/* Hero Visual Section with Sports Motorcycle Background (focused element) */}
+      <div
+        id="pulse-hero-banner"
+        className="relative overflow-hidden border-b border-[#181c24] px-4 sm:px-8 py-6 sm:py-7 bg-cover bg-center bg-no-repeat transition-all duration-300"
+        style={{ backgroundImage: "url('/images/sports-motorcycle-bg.jpg')" }}
+      >
+        {/* Cinematic dark studio gradient overlays to ensure 100% WCAG AA contrast for text */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f]/95 via-[#0c0e14]/80 to-[#080a0f]/92 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08090c] via-transparent to-[#08090c]/60 pointer-events-none" />
+        {/* Subtle red spotlight glow */}
+        <div className="absolute -top-16 left-1/4 w-96 h-48 bg-red-600/15 blur-[90px] rounded-full pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <MotoluvIsotype className="w-4 h-4 shrink-0 drop-shadow-[0_0_6px_rgba(238,28,37,0.7)]" />
+              <MotoluvIsotype className="w-4 h-4 shrink-0 drop-shadow-[0_0_8px_rgba(238,28,37,0.8)]" />
               <span className="text-[10px] font-extrabold tracking-[0.2em] text-red-500 uppercase font-tech">
                 MOTOLUV ANALYTICS
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wider uppercase font-display italic">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wider uppercase font-display italic drop-shadow-md">
               MERCADO EN MOVIMIENTO
             </h1>
           </div>

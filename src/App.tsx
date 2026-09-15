@@ -119,8 +119,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090a0d] text-zinc-100 flex flex-col md:flex-row antialiased">
-      {/* Fixed / Sticky Sidebar */}
+    <div className="min-h-screen bg-[#090a0d] text-zinc-100 flex flex-col md:flex-row antialiased relative selection:bg-red-500/30 selection:text-white">
+      {/* Global subtle Sports Motorcycle backdrop */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-10 mix-blend-luminosity z-0"
+        style={{ backgroundImage: "url('/images/sports-motorcycle-bg.jpg')" }}
+      />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#090a0d]/80 via-[#090a0d]/90 to-[#090a0d] pointer-events-none z-0" />
+
+      {/* Fixed / Sticky Sidebar (Vertical on Desktop, Bottom Nav on Mobile) */}
       <Sidebar
         currentSection={currentSection}
         onSelectSection={(sec) => setCurrentSection(sec)}
@@ -131,7 +138,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Top Header with filters and status */}
         <Header
           connection={connection}
@@ -153,7 +160,7 @@ export default function App() {
 
         {/* Dynamic Section Rendering */}
         <main
-          className={`flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-6 ${
+          className={`flex-1 px-3 sm:px-6 lg:px-8 py-5 sm:py-6 pb-28 md:pb-8 space-y-6 ${
             isSidebarCollapsed ? 'max-w-none w-full' : 'max-w-[1600px] w-full'
           } mx-auto transition-all duration-300`}
         >

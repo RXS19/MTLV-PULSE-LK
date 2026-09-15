@@ -4,6 +4,7 @@ import {
   Bike,
   Tag,
   FileText,
+  FileCheck,
   AlertCircle,
   CheckCircle2,
   RefreshCw,
@@ -34,6 +35,12 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
   };
 
   const apartadas = inventoryBlock?.motosApartadas || {
+    count: 0,
+    isAvailable: false,
+    unavailableMessage: 'Esperando respuesta del servidor',
+  };
+
+  const vcDocumental = inventoryBlock?.motosVcDocumental || {
     count: 0,
     isAvailable: false,
     unavailableMessage: 'Esperando respuesta del servidor',
@@ -299,7 +306,7 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
                 Atributos adicionales (sin duplicar motos):
               </span>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {/* Apartadas */}
                 <div
                   id="attr-apartadas"
@@ -307,8 +314,8 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
                   title="Motocicletas distintas con un apartado vigente"
                 >
                   <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-medium">
-                    <FileText className="w-3 h-3 text-red-400" />
-                    <span className="uppercase tracking-wider">Apartadas</span>
+                    <FileText className="w-3 h-3 text-red-400 shrink-0" />
+                    <span className="uppercase tracking-wider truncate">Apartadas</span>
                   </div>
                   <div className="flex items-baseline gap-1.5 mt-1">
                     <span className="text-lg font-black text-white font-display">
@@ -325,12 +332,30 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
                   title="Motocicletas distintas con al menos 1 oferta registrada"
                 >
                   <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-medium">
-                    <Tag className="w-3 h-3 text-red-400" />
-                    <span className="uppercase tracking-wider">Con Oferta</span>
+                    <Tag className="w-3 h-3 text-red-400 shrink-0" />
+                    <span className="uppercase tracking-wider truncate">Con Oferta</span>
                   </div>
                   <div className="flex items-baseline gap-1.5 mt-1">
                     <span className="text-lg font-black text-white font-display">
                       {conOferta.isAvailable ? conOferta.count.toLocaleString('es-MX') : '—'}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-mono">motos</span>
+                  </div>
+                </div>
+
+                {/* VC Documental */}
+                <div
+                  id="attr-vc-documental"
+                  className="p-2.5 rounded-lg bg-[#0d0f14] border border-[#1e232e] flex flex-col justify-between"
+                  title="Motocicletas en Validación y Certificación Documental (VC Documental)"
+                >
+                  <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-medium">
+                    <FileCheck className="w-3 h-3 text-amber-400 shrink-0" />
+                    <span className="uppercase tracking-wider truncate">VC Documental</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 mt-1">
+                    <span className="text-lg font-black text-white font-display">
+                      {vcDocumental.isAvailable ? vcDocumental.count.toLocaleString('es-MX') : '—'}
                     </span>
                     <span className="text-[10px] text-zinc-400 font-mono">motos</span>
                   </div>

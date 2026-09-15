@@ -96,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
             id="filter-period"
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171f] border border-[#232836] text-xs font-medium text-zinc-200 shadow-sm"
           >
-            <Calendar className="w-3.5 h-3.5 text-red-500 shrink-0" />
+            <Calendar className="w-3.5 h-3.5 text-white shrink-0" />
             <select
               id="period-select"
               value={selectedPeriod}
@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="bg-transparent border-none text-zinc-200 text-xs font-medium focus:outline-hidden cursor-pointer"
             >
               <option value="all" className="bg-[#14171f] text-zinc-200">
-                14 sep 2026 - Actualidad (Todo)
+                13 sep 2026 - Actualidad (Todo)
               </option>
               <option value="7d" className="bg-[#14171f] text-zinc-200">
                 Últimos 7 días
@@ -183,6 +183,9 @@ export const Header: React.FC<HeaderProps> = ({
               </option>
               <option value="EN REVISIÓN" className="bg-[#14171f] text-zinc-200">
                 EN REVISIÓN
+              </option>
+              <option value="VC DOCUMENTAL" className="bg-[#14171f] text-zinc-200">
+                VC DOCUMENTAL
               </option>
               <option value="RECHAZADA" className="bg-[#14171f] text-zinc-200">
                 RECHAZADA

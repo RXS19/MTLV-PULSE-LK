@@ -28,12 +28,13 @@ export interface ConnectionStatusInfo {
     operation_tracking: boolean;
   };
   tablesStatus?: {
-    users: { success: boolean; error?: string };
-    motos: { success: boolean; error?: string };
-    apartados: { success: boolean; error?: string };
-    offers: { success: boolean; error?: string };
-    operation_tracking: { success: boolean; error?: string };
+    users: { success: boolean; error?: string; rowCount?: number; details?: string };
+    motos: { success: boolean; error?: string; rowCount?: number; details?: string };
+    apartados: { success: boolean; error?: string; rowCount?: number; details?: string };
+    offers: { success: boolean; error?: string; rowCount?: number; details?: string };
+    operation_tracking: { success: boolean; error?: string; rowCount?: number; details?: string };
   };
+  queryFailures?: Array<{ metric: string; table: string; error: string }>;
 }
 
 export interface InventoryMetricItem {
@@ -57,6 +58,7 @@ export interface InventoryBlockData {
   motosPublicadas: InventoryMetricItem;
   motosConOferta: InventoryMetricItem;
   motosApartadas: InventoryMetricItem;
+  motosVcDocumental?: InventoryMetricItem;
   appliedFilters?: {
     period?: string;
     brand?: string;
@@ -123,6 +125,7 @@ export interface DashboardData {
     deliveries: KPIValue;
   };
   userGrowth: UserGrowthPoint[];
+  userGrowthError?: string;
   inventoryDistribution: {
     items: InventoryItem[];
     totalActiveInventory: number;

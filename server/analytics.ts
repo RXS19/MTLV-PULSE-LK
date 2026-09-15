@@ -14,12 +14,13 @@ export interface DashboardMetricsResult {
     errorType?: string | null;
     errorMessage?: string;
     tablesStatus: {
-      users: { success: boolean; error?: string };
-      motos: { success: boolean; error?: string };
-      apartados: { success: boolean; error?: string };
-      offers: { success: boolean; error?: string };
-      operation_tracking: { success: boolean; error?: string };
+      users: { success: boolean; rowCount?: number; error?: string; details?: string };
+      motos: { success: boolean; rowCount?: number; error?: string; details?: string };
+      apartados: { success: boolean; rowCount?: number; error?: string; details?: string };
+      offers: { success: boolean; rowCount?: number; error?: string; details?: string };
+      operation_tracking: { success: boolean; rowCount?: number; error?: string; details?: string };
     };
+    queryFailures: Array<{ metric: string; table: string; error: string }>;
   };
   inventoryBlock: {
     totalUniqueMotos: number;
@@ -42,6 +43,12 @@ export interface DashboardMetricsResult {
       queryDetails?: string;
     };
     motosApartadas: {
+      count: number;
+      isAvailable: boolean;
+      unavailableMessage?: string;
+      queryDetails?: string;
+    };
+    motosVcDocumental?: {
       count: number;
       isAvailable: boolean;
       unavailableMessage?: string;
@@ -101,6 +108,7 @@ export interface DashboardMetricsResult {
     newUsers: number;
     cumulativeUsers: number;
   }>;
+  userGrowthError?: string;
   inventoryDistribution: {
     items: Array<{
       status: string;
@@ -208,12 +216,13 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       errorType: 'MISSING_CREDENTIALS',
       errorMessage: 'Credenciales de base de datos no configuradas en variables de entorno (DATABASE_URL o POSTGRES_URL).',
       tablesStatus: {
-        users: { success: false },
-        motos: { success: false },
-        apartados: { success: false },
-        offers: { success: false },
-        operation_tracking: { success: false },
+        users: { success: false, rowCount: 0 },
+        motos: { success: false, rowCount: 0 },
+        apartados: { success: false, rowCount: 0 },
+        offers: { success: false, rowCount: 0 },
+        operation_tracking: { success: false, rowCount: 0 },
       },
+      queryFailures: [],
     },
     inventoryBlock: {
       totalUniqueMotos: 0,
@@ -232,6 +241,11 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
         count: 0,
         isAvailable: false,
         unavailableMessage: 'Pendiente de consulta en public.apartados',
+      },
+      motosVcDocumental: {
+        count: 0,
+        isAvailable: false,
+        unavailableMessage: 'Pendiente de consulta en public.motos',
       },
       appliedFilters: {
         period: filters.period || 'all',
@@ -262,6 +276,11 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
   let atLeastOneQuerySucceeded = false;
   let connectionFatalError: any = null;
 
+  // Helper to record query failure
+  const recordQueryFailure = (metric: string, table: string, error: string) => {
+    baseResult.connection.queryFailures.push({ metric, table, error });
+  };
+
   // ----------------------------------------------------
   // 1. PUBLIC.USERS (Isolated Query)
   // Known columns: created_at
@@ -285,8 +304,9 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       `);
       currentPeriodUsers = parseInt(weeklyUsersRes[0]?.current_week || '0', 10);
       prevPeriodUsers = parseInt(weeklyUsersRes[0]?.prev_week || '0', 10);
-    } catch {
-      // If date filtering fails, keep totalUsers without error
+    } catch (weeklyUsersErr: any) {
+      console.error('[PULSE Analytics] Error en comparativa semanal de public.users:', weeklyUsersErr?.message || weeklyUsersErr);
+      recordQueryFailure('usersWeeklyTrend', 'public.users', weeklyUsersErr?.message || String(weeklyUsersErr));
     }
 
     const usersChange = calculatePercentageChange(currentPeriodUsers, prevPeriodUsers);
@@ -298,21 +318,21 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       isAvailable: true,
     };
 
-    // User growth series starting from 14 de septiembre de 2026
+    // User growth series starting from 13 de septiembre de 2026
     try {
-      const baseBeforeSep14Res = await executeReadOnlyQuery<{ count: string }>(`
+      const baseBeforeSep13Res = await executeReadOnlyQuery<{ count: string }>(`
         SELECT COUNT(*)::text as count
         FROM public.users
-        WHERE (created_at AT TIME ZONE 'America/Mexico_City') < '2026-09-14 00:00:00'::timestamp;
+        WHERE (created_at AT TIME ZONE 'America/Mexico_City') < '2026-09-13 00:00:00'::timestamp;
       `);
-      let runningCumulative = parseInt(baseBeforeSep14Res[0]?.count || '0', 10);
+      let runningCumulative = parseInt(baseBeforeSep13Res[0]?.count || '0', 10);
 
       const dailyGrowthRes = await executeReadOnlyQuery<{ day_str: string; new_users: string }>(`
         SELECT 
           TO_CHAR((created_at AT TIME ZONE 'America/Mexico_City')::date, 'YYYY-MM-DD') as day_str,
           COUNT(*)::text as new_users
         FROM public.users
-        WHERE (created_at AT TIME ZONE 'America/Mexico_City') >= '2026-09-14 00:00:00'::timestamp
+        WHERE (created_at AT TIME ZONE 'America/Mexico_City') >= '2026-09-13 00:00:00'::timestamp
         GROUP BY (created_at AT TIME ZONE 'America/Mexico_City')::date
         ORDER BY (created_at AT TIME ZONE 'America/Mexico_City')::date ASC;
       `);
@@ -328,16 +348,24 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
           cumulativeUsers: runningCumulative,
         };
       });
-    } catch {
-      // Keep empty if created_at query has issues
+    } catch (growthErr: any) {
+      console.error('[PULSE Analytics] Error en consulta de crecimiento de usuarios (userGrowth):', growthErr?.message || growthErr);
+      recordQueryFailure('userGrowth', 'public.users', growthErr?.message || String(growthErr));
+      baseResult.userGrowthError = growthErr?.message || String(growthErr);
     }
 
-    baseResult.connection.tablesStatus.users = { success: true };
+    baseResult.connection.tablesStatus.users = { 
+      success: true,
+      rowCount: totalUsers,
+      details: totalUsers === 0 ? 'Consulta exitosa. Retornó 0 filas debido a políticas RLS del usuario de lectura.' : undefined
+    };
     atLeastOneQuerySucceeded = true;
   } catch (err: any) {
     const classified = classifyPgError(err);
+    console.error('[PULSE Analytics] Error al consultar public.users:', err?.message || err);
+    recordQueryFailure('users', 'public.users', classified.message);
     connectionFatalError = connectionFatalError || classified;
-    baseResult.connection.tablesStatus.users = { success: false, error: classified.message };
+    baseResult.connection.tablesStatus.users = { success: false, rowCount: 0, error: classified.message };
     baseResult.kpis.users = {
       total: 0,
       previousPeriodTotal: 0,
@@ -359,6 +387,11 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
   // ----------------------------------------------------
   let totalPublicada = 0;
   try {
+    const totalMotosInTableRes = await executeReadOnlyQuery<{ count: string }>(
+      'SELECT COUNT(*)::text as count FROM public.motos;'
+    );
+    const totalMotosInTable = parseInt(totalMotosInTableRes[0]?.count || '0', 10);
+
     let publicadasWhere = "WHERE status = 'PUBLICADA' AND status NOT IN ('ENTREGADA', 'EN REVISIÓN', 'RECHAZADA')";
     if (filters.brand && filters.brand !== 'all') {
       publicadasWhere += ` AND brand = '${filters.brand.replace(/'/g, "''")}'`;
@@ -401,8 +434,9 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       `);
       currentMotos = parseInt(weeklyMotosRes[0]?.current_week || '0', 10);
       prevMotos = parseInt(weeklyMotosRes[0]?.prev_week || '0', 10);
-    } catch {
-      // Ignore if created_at does not exist or has type mismatch
+    } catch (weeklyMotosErr: any) {
+      console.error('[PULSE Analytics] Error en comparativa semanal de public.motos:', weeklyMotosErr?.message || weeklyMotosErr);
+      recordQueryFailure('motosWeeklyTrend', 'public.motos', weeklyMotosErr?.message || String(weeklyMotosErr));
     }
 
     const motoChange = calculatePercentageChange(currentMotos, prevMotos);
@@ -422,9 +456,12 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       `);
       baseResult.filterDimensions.brands = brandRows.map(r => r.brand);
       baseResult.filterDimensions.hasBrandField = brandRows.length > 0;
-    } catch {}
+    } catch (brandErr: any) {
+      console.error('[PULSE Analytics] Error al consultar marcas en public.motos:', brandErr?.message || brandErr);
+      recordQueryFailure('brands', 'public.motos', brandErr?.message || String(brandErr));
+    }
 
-    baseResult.filterDimensions.statuses = ['PUBLICADA', 'EN REVISIÓN', 'RECHAZADA', 'ENTREGADA'];
+    baseResult.filterDimensions.statuses = ['PUBLICADA', 'EN REVISIÓN', 'VC DOCUMENTAL', 'RECHAZADA', 'ENTREGADA'];
     baseResult.filterDimensions.hasStatusField = true;
 
     // Guaranteed unique non-duplicated motorcycle inventory queries
@@ -440,7 +477,9 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
         ${motosBrandWhere};
       `);
       totalUniqueMotos = parseInt(uniqueRes[0]?.count || '0', 10);
-    } catch {
+    } catch (uniqErr: any) {
+      console.error('[PULSE Analytics] Error al consultar conteo único en public.motos:', uniqErr?.message || uniqErr);
+      recordQueryFailure('totalUniqueMotos', 'public.motos', uniqErr?.message || String(uniqErr));
       totalUniqueMotos = totalPublicada;
     }
 
@@ -496,7 +535,36 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
         totalActiveInventory: effectiveTotal,
         isAvailable: true,
       };
-    } catch {
+
+      // Query specifically for "VC Documental" (Validation / Certification Documental)
+      try {
+        let vcWhere = "WHERE status = 'EN REVISIÓN' OR UPPER(COALESCE(certification_status::text, '')) LIKE '%DOC%'";
+        if (filters.brand && filters.brand !== 'all') {
+          vcWhere += ` AND brand = '${filters.brand.replace(/'/g, "''")}'`;
+        }
+        const vcRes = await executeReadOnlyQuery<{ count: string }>(`
+          SELECT COUNT(DISTINCT id)::text as count
+          FROM public.motos
+          ${vcWhere};
+        `);
+        const totalVc = parseInt(vcRes[0]?.count || '0', 10);
+        baseResult.inventoryBlock.motosVcDocumental = {
+          count: totalVc,
+          isAvailable: true,
+          queryDetails: "Tabla: public.motos | Condición: status = 'EN REVISIÓN' OR certification_status LIKE '%DOC%'",
+        };
+      } catch (vcErr: any) {
+        console.error('[PULSE Analytics] Error al consultar motos en VC Documental:', vcErr?.message || vcErr);
+        recordQueryFailure('motosVcDocumental', 'public.motos', vcErr?.message || String(vcErr));
+        baseResult.inventoryBlock.motosVcDocumental = {
+          count: 0,
+          isAvailable: false,
+          unavailableMessage: `Error al consultar VC Documental: ${vcErr?.message || String(vcErr)}`,
+        };
+      }
+    } catch (distErr: any) {
+      console.error('[PULSE Analytics] Error en distribución de inventario por estado:', distErr?.message || distErr);
+      recordQueryFailure('inventoryDistribution', 'public.motos', distErr?.message || String(distErr));
       baseResult.inventoryBlock.totalUniqueMotos = totalPublicada;
       baseResult.inventoryBlock.statusSlices = [
         { status: 'PUBLICADA', count: totalPublicada, percentage: 100, color: '#ff1e27' }
@@ -506,16 +574,23 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
           { status: 'PUBLICADA', count: totalPublicada, percentage: 100, color: '#ff1e27' }
         ],
         totalActiveInventory: totalPublicada,
-        isAvailable: true,
+        isAvailable: totalPublicada > 0,
+        unavailableMessage: `Error al consultar distribución por estado: ${distErr?.message || String(distErr)}`,
       };
     }
 
-    baseResult.connection.tablesStatus.motos = { success: true };
+    baseResult.connection.tablesStatus.motos = { 
+      success: true,
+      rowCount: totalMotosInTable,
+      details: totalMotosInTable === 0 ? 'Consulta exitosa. Retornó 0 filas debido a políticas RLS del usuario de lectura.' : undefined
+    };
     atLeastOneQuerySucceeded = true;
   } catch (err: any) {
     const classified = classifyPgError(err);
+    console.error('[PULSE Analytics] Error al consultar public.motos:', err?.message || err);
+    recordQueryFailure('motos', 'public.motos', classified.message);
     connectionFatalError = connectionFatalError || classified;
-    baseResult.connection.tablesStatus.motos = { success: false, error: classified.message };
+    baseResult.connection.tablesStatus.motos = { success: false, rowCount: 0, error: classified.message };
     baseResult.inventoryBlock.motosPublicadas = {
       count: 0,
       isAvailable: false,
@@ -547,6 +622,11 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
   // - Exclude expired, cancelled, released, or non-active
   // ----------------------------------------------------
   try {
+    const totalApartadosInTableRes = await executeReadOnlyQuery<{ count: string }>(
+      'SELECT COUNT(*)::text as count FROM public.apartados;'
+    );
+    const totalApartadosInTable = parseInt(totalApartadosInTableRes[0]?.count || '0', 10);
+
     let apartadosWhere = "WHERE moto_id IS NOT NULL AND status = 'REALIZADO' AND (expires_at IS NULL OR expires_at > NOW()) AND cancellation_requested_at IS NULL";
     if (filters.brand && filters.brand !== 'all') {
       apartadosWhere += ` AND moto_id IN (SELECT id FROM public.motos WHERE brand = '${filters.brand.replace(/'/g, "''")}')`;
@@ -584,8 +664,9 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       `);
       currentApartados = parseInt(weeklyAptRes[0]?.current_week || '0', 10);
       prevApartados = parseInt(weeklyAptRes[0]?.prev_week || '0', 10);
-    } catch {
-      // Keep totalApartadas as current if date calculation not available
+    } catch (weeklyAptErr: any) {
+      console.error('[PULSE Analytics] Error en comparativa semanal de public.apartados:', weeklyAptErr?.message || weeklyAptErr);
+      recordQueryFailure('apartadosWeeklyTrend', 'public.apartados', weeklyAptErr?.message || String(weeklyAptErr));
     }
 
     const aptChange = calculatePercentageChange(currentApartados, prevApartados);
@@ -598,12 +679,18 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       isAvailable: true,
     };
 
-    baseResult.connection.tablesStatus.apartados = { success: true };
+    baseResult.connection.tablesStatus.apartados = { 
+      success: true,
+      rowCount: totalApartadosInTable,
+      details: totalApartadosInTable === 0 ? 'Consulta exitosa. Retornó 0 filas.' : undefined
+    };
     atLeastOneQuerySucceeded = true;
   } catch (err: any) {
     const classified = classifyPgError(err);
+    console.error('[PULSE Analytics] Error al consultar public.apartados:', err?.message || err);
+    recordQueryFailure('apartados', 'public.apartados', classified.message);
     connectionFatalError = connectionFatalError || classified;
-    baseResult.connection.tablesStatus.apartados = { success: false, error: classified.message };
+    baseResult.connection.tablesStatus.apartados = { success: false, rowCount: 0, error: classified.message };
     baseResult.inventoryBlock.motosApartadas = {
       count: 0,
       isAvailable: false,
@@ -631,6 +718,11 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
   let hasAcceptedOffers = false;
 
   try {
+    const totalOffersInTableRes = await executeReadOnlyQuery<{ count: string }>(
+      'SELECT COUNT(*)::text as count FROM public.offers;'
+    );
+    const totalOffersInTable = parseInt(totalOffersInTableRes[0]?.count || '0', 10);
+
     let offersWhere = "WHERE moto_id IS NOT NULL";
     if (filters.brand && filters.brand !== 'all') {
       offersWhere += ` AND moto_id IN (SELECT id FROM public.motos WHERE brand = '${filters.brand.replace(/'/g, "''")}')`;
@@ -668,8 +760,9 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       `);
       currentOffers = parseInt(weeklyOffersRes[0]?.current_week || '0', 10);
       prevOffers = parseInt(weeklyOffersRes[0]?.prev_week || '0', 10);
-    } catch {
-      // Keep totalMotosConOferta as current if date query fails
+    } catch (weeklyOffErr: any) {
+      console.error('[PULSE Analytics] Error en comparativa semanal de public.offers:', weeklyOffErr?.message || weeklyOffErr);
+      recordQueryFailure('offersWeeklyTrend', 'public.offers', weeklyOffErr?.message || String(weeklyOffErr));
     }
 
     const offChange = calculatePercentageChange(currentOffers, prevOffers);
@@ -687,20 +780,27 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       const acceptedRes = await executeReadOnlyQuery<{ count: string }>(`
         SELECT COUNT(*)::text as count
         FROM public.offers
-        WHERE UPPER(status) = 'ACEPTADA';
+        WHERE UPPER(status::text) = 'ACEPTADA';
       `);
       acceptedOffersCount = parseInt(acceptedRes[0]?.count || '0', 10);
       hasAcceptedOffers = true;
-    } catch {
-      // Ignore if status col not available
+    } catch (acceptedErr: any) {
+      console.error('[PULSE Analytics] Error al consultar ofertas aceptadas:', acceptedErr?.message || acceptedErr);
+      recordQueryFailure('acceptedOffers', 'public.offers', acceptedErr?.message || String(acceptedErr));
     }
 
-    baseResult.connection.tablesStatus.offers = { success: true };
+    baseResult.connection.tablesStatus.offers = { 
+      success: true,
+      rowCount: totalOffersInTable,
+      details: totalOffersInTable === 0 ? 'Consulta exitosa. Retornó 0 filas.' : undefined
+    };
     atLeastOneQuerySucceeded = true;
   } catch (err: any) {
     const classified = classifyPgError(err);
+    console.error('[PULSE Analytics] Error al consultar public.offers:', err?.message || err);
+    recordQueryFailure('offers', 'public.offers', classified.message);
     connectionFatalError = connectionFatalError || classified;
-    baseResult.connection.tablesStatus.offers = { success: false, error: classified.message };
+    baseResult.connection.tablesStatus.offers = { success: false, rowCount: 0, error: classified.message };
     baseResult.inventoryBlock.motosConOferta = {
       count: 0,
       isAvailable: false,
@@ -721,6 +821,11 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
   // Known columns: id, delivery_status, delivery_completed_at, current_stage, created_at
   // ----------------------------------------------------
   try {
+    const totalOpsInTableRes = await executeReadOnlyQuery<{ count: string }>(
+      'SELECT COUNT(*)::text as count FROM public.operation_tracking;'
+    );
+    const totalOpsInTable = parseInt(totalOpsInTableRes[0]?.count || '0', 10);
+
     const totalDeliveriesRes = await executeReadOnlyQuery<{ count: string }>(`
       SELECT COUNT(*)::text as count 
       FROM public.operation_tracking
@@ -741,8 +846,9 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       `);
       currentDeliveries = parseInt(weeklyRes[0]?.current_week || '0', 10);
       prevDeliveries = parseInt(weeklyRes[0]?.prev_week || '0', 10);
-    } catch {
-      // delivery_completed_at fallback
+    } catch (weeklyDelivErr: any) {
+      console.error('[PULSE Analytics] Error en comparativa semanal de public.operation_tracking:', weeklyDelivErr?.message || weeklyDelivErr);
+      recordQueryFailure('deliveriesWeeklyTrend', 'public.operation_tracking', weeklyDelivErr?.message || String(weeklyDelivErr));
     }
 
     const deliveryChange = calculatePercentageChange(currentDeliveries, prevDeliveries);
@@ -796,6 +902,8 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
         isAvailable: true,
       };
     } catch (opsErr: any) {
+      console.error('[PULSE Analytics] Error en consulta de operaciones activas:', opsErr?.message || opsErr);
+      recordQueryFailure('activeOperations', 'public.operation_tracking', opsErr?.message || String(opsErr));
       baseResult.activeOperations = {
         items: [],
         isAvailable: false,
@@ -803,12 +911,18 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       };
     }
 
-    baseResult.connection.tablesStatus.operation_tracking = { success: true };
+    baseResult.connection.tablesStatus.operation_tracking = { 
+      success: true,
+      rowCount: totalOpsInTable,
+      details: totalOpsInTable === 0 ? 'Consulta exitosa. Retornó 0 filas.' : undefined
+    };
     atLeastOneQuerySucceeded = true;
   } catch (err: any) {
     const classified = classifyPgError(err);
+    console.error('[PULSE Analytics] Error al consultar public.operation_tracking:', err?.message || err);
+    recordQueryFailure('deliveries', 'public.operation_tracking', classified.message);
     connectionFatalError = connectionFatalError || classified;
-    baseResult.connection.tablesStatus.operation_tracking = { success: false, error: classified.message };
+    baseResult.connection.tablesStatus.operation_tracking = { success: false, rowCount: 0, error: classified.message };
     baseResult.kpis.deliveries = {
       total: 0,
       previousPeriodTotal: 0,
@@ -891,11 +1005,13 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
       };
     }
   } catch (popErr: any) {
+    console.error('[PULSE Analytics] Error al consultar motocicletas populares:', popErr?.message || popErr);
+    recordQueryFailure('popularMotos', 'public.offers', popErr?.message || String(popErr));
     baseResult.popularMotos = {
       items: [],
       criterion: '',
       isAvailable: false,
-      unavailableMessage: `Ranking no disponible con las tablas actualmente autorizadas: ${popErr.message}`,
+      unavailableMessage: `Ranking no disponible con las tablas actualmente autorizadas: ${popErr?.message || String(popErr)}`,
     };
   }
 

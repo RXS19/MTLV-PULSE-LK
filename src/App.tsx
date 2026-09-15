@@ -19,22 +19,16 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [currentSection, setCurrentSection] = useState<NavSection>('resumen');
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('pulse_sidebar_collapsed') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  // El menú de motos siempre debe estar retraído al abrir la página
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(true);
+
+  // Siempre debe aparecer la página al inicio hasta arriba al abrir
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
 
   const toggleSidebar = () => {
-    setIsSidebarCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('pulse_sidebar_collapsed', String(next));
-      } catch {}
-      return next;
-    });
+    setIsSidebarCollapsed((prev) => !prev);
   };
 
   const [filters, setFilters] = useState<{ period: string; brand: string; status: string }>({

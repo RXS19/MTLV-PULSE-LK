@@ -19,6 +19,23 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [currentSection, setCurrentSection] = useState<NavSection>('resumen');
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState<boolean>(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('pulse_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('pulse_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const [filters, setFilters] = useState<{ period: string; brand: string; status: string }>({
     period: 'all',
@@ -115,6 +132,8 @@ export default function App() {
         onSelectSection={(sec) => setCurrentSection(sec)}
         connection={connection}
         onOpenConnectionModal={() => setIsConnectionModalOpen(true)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
 
       {/* Main Content Area */}
@@ -134,10 +153,16 @@ export default function App() {
           selectedStatus={filters.status}
           onFilterChange={handleFilterChange}
           lastUpdated={connection.lastUpdated}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
         />
 
         {/* Dynamic Section Rendering */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px] w-full mx-auto">
+        <main
+          className={`flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-6 ${
+            isSidebarCollapsed ? 'max-w-none w-full' : 'max-w-[1600px] w-full'
+          } mx-auto transition-all duration-300`}
+        >
           {currentSection !== 'resumen' ? (
             <SectionInProgress
               section={currentSection}

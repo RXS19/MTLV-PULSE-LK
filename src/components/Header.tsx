@@ -1,6 +1,18 @@
 import React, { useMemo } from 'react';
-import { Calendar, ChevronDown, RefreshCw, Sparkles, Shield, Database, Radio, Clock } from 'lucide-react';
+import {
+  Calendar,
+  ChevronDown,
+  RefreshCw,
+  Sparkles,
+  Shield,
+  Database,
+  Radio,
+  Clock,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react';
 import { ConnectionStatusInfo } from '../types.js';
+import { MotoluvIsotype } from './MotoluvIsotype.js';
 
 interface HeaderProps {
   connection: ConnectionStatusInfo;
@@ -16,6 +28,8 @@ interface HeaderProps {
   selectedStatus?: string;
   onFilterChange?: (filters: { period: string; brand: string; status: string }) => void;
   lastUpdated?: string;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,6 +46,8 @@ export const Header: React.FC<HeaderProps> = ({
   selectedStatus = 'all',
   onFilterChange,
   lastUpdated,
+  isSidebarCollapsed = false,
+  onToggleSidebar,
 }) => {
   const formattedDateTime = useMemo(() => {
     const raw = lastUpdated || connection?.lastUpdated;
@@ -58,6 +74,23 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 py-4 px-8 border-b border-[#181c24] bg-[#0c0e12]/80 backdrop-blur-md sticky top-0 z-20">
         {/* Filters Row */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Header Motoluv Brand / Menu Toggle */}
+          <button
+            id="header-sidebar-toggle-btn"
+            type="button"
+            onClick={onToggleSidebar}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171f] hover:bg-[#1a1e29] border border-[#232836] text-zinc-200 hover:text-white transition-all text-xs font-semibold shadow-xs group cursor-pointer"
+            title={isSidebarCollapsed ? 'Expandir menú lateral' : 'Contraer menú (Pantalla completa)'}
+          >
+            <MotoluvIsotype className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+            <span className="font-black tracking-wider text-white font-display">MOTOLUV</span>
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-400 transition-colors ml-0.5" />
+            ) : (
+              <PanelLeftClose className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-400 transition-colors ml-0.5" />
+            )}
+          </button>
+
           {/* Period Filter */}
           <div
             id="filter-period"
@@ -246,6 +279,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
+              <MotoluvIsotype className="w-4 h-4 shrink-0 drop-shadow-[0_0_6px_rgba(238,28,37,0.7)]" />
               <span className="text-[10px] font-extrabold tracking-[0.2em] text-red-500 uppercase font-tech">
                 MOTOLUV ANALYTICS
               </span>
@@ -254,9 +288,6 @@ export const Header: React.FC<HeaderProps> = ({
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wider uppercase font-display italic">
               MERCADO EN MOVIMIENTO
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-normal">
-              Visión ejecutiva para decisiones que aceleran.
-            </p>
           </div>
 
           {/* Right Brand Pillar Tag */}

@@ -136,14 +136,14 @@ export const KPICards: React.FC<KPICardsProps> = ({
                         <div className="flex items-center gap-1 font-bold text-xs sm:text-sm">
                           {data.changePercent !== null ? (
                             isUp ? (
-                              <span className="text-emerald-400 flex items-center font-extrabold">
+                              <span className="text-blue-400 flex items-center font-extrabold">
                                 <span className="mr-0.5 text-base leading-none">↑</span>
-                                +{Math.abs(data.changePercent)}%
+                                {Math.abs(data.changePercent)}%
                               </span>
                             ) : isDown ? (
                               <span className="text-red-500 flex items-center font-extrabold">
                                 <span className="mr-0.5 text-base leading-none">↓</span>
-                                -{Math.abs(data.changePercent)}%
+                                {Math.abs(data.changePercent)}%
                               </span>
                             ) : (
                               <span className="text-zinc-400 flex items-center font-bold">
@@ -162,9 +162,9 @@ export const KPICards: React.FC<KPICardsProps> = ({
 
                       {/* Right: Dynamic Wave Sparkline (Centered vertically, constrained so it never overlaps any text) */}
                       {(() => {
-                        const strokeColor = isUp ? '#10b981' : isDown ? '#ef4444' : '#71717a';
+                        const strokeColor = isUp ? '#3b82f6' : isDown ? '#ef4444' : '#71717a';
                         const glowColor = isUp
-                          ? 'drop-shadow-[0_0_4px_rgba(16,185,129,0.6)]'
+                          ? 'drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]'
                           : isDown
                           ? 'drop-shadow-[0_0_4px_rgba(239,68,68,0.6)]'
                           : '';

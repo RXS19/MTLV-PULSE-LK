@@ -372,6 +372,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id="pulse-mobile-bottom-nav"
         className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0a0c10]/85 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.7)] px-2 py-1.5"
       >
+        {/* Backdrop for mobile submenu */}
+        {isMotosExpanded && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden"
+            onClick={() => setIsMotosExpanded(false)}
+          />
+        )}
+
         {/* Floating Motos Submenu sheet on mobile when expanded */}
         {isMotosExpanded && (
           <div
@@ -504,12 +512,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div
-              className={`p-1 rounded-lg relative ${
+              className={`p-1 rounded-lg ${
                 isMotosActive ? 'bg-red-600/20 text-red-400 border border-red-600/30' : ''
               }`}
             >
               <Bike className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(255,30,39,0.9)]" />
             </div>
             <span className="text-[10px] mt-0.5 tracking-tight flex items-center gap-0.5">
               Motos

@@ -182,6 +182,8 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
                         className="transition-all duration-200 cursor-pointer"
                         onMouseEnter={() => setHoveredSliceIndex(slice.index)}
                         onMouseLeave={() => setHoveredSliceIndex(null)}
+                        onTouchStart={() => setHoveredSliceIndex(hoveredSliceIndex === slice.index ? null : slice.index)}
+                        onClick={() => setHoveredSliceIndex(hoveredSliceIndex === slice.index ? null : slice.index)}
                       />
                     );
                   })}
@@ -227,7 +229,7 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
             </div>
 
             <p className="text-[10px] text-zinc-400 font-mono text-center mt-2">
-              Pasa el cursor sobre los arcos de la rueda para inspeccionar cada estado.
+              Toca o pasa el cursor sobre los arcos de la rueda para inspeccionar cada estado.
             </p>
           </div>
 
@@ -256,6 +258,8 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
                         id={`legend-status-${slice.status.toLowerCase().replace(/\s+/g, '-')}`}
                         onMouseEnter={() => setHoveredSliceIndex(idx)}
                         onMouseLeave={() => setHoveredSliceIndex(null)}
+                        onTouchStart={() => setHoveredSliceIndex(hoveredSliceIndex === idx ? null : idx)}
+                        onClick={() => setHoveredSliceIndex(hoveredSliceIndex === idx ? null : idx)}
                         className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
                           isHovered
                             ? 'bg-[#181d26] border-zinc-700 shadow-sm'

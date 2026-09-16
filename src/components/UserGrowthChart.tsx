@@ -203,18 +203,31 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
             if (barHeight <= 0) return null;
 
             return (
-              <rect
-                key={`bar-${i}`}
-                x={x}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                rx={0.5}
-                fill={isHovered ? '#ff3b44' : '#e50914'}
-                className="cursor-pointer transition-colors"
-                onMouseEnter={() => setHoveredIdx(i)}
-                onMouseLeave={() => setHoveredIdx(null)}
-              />
+              <g key={`bar-group-${i}`}>
+                {/* Wider transparent hit area for easy tapping on mobile */}
+                <rect
+                  x={xCenter - Math.max(12, stepX / 2)}
+                  y={paddingTop}
+                  width={Math.max(24, stepX)}
+                  height={innerHeight}
+                  fill="transparent"
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHoveredIdx(i)}
+                  onMouseLeave={() => setHoveredIdx(null)}
+                  onTouchStart={() => setHoveredIdx(i)}
+                  onClick={() => setHoveredIdx(hoveredIdx === i ? null : i)}
+                />
+                <rect
+                  key={`bar-${i}`}
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  rx={0.5}
+                  fill={isHovered ? '#ff3b44' : '#e50914'}
+                  className="cursor-pointer transition-colors pointer-events-none"
+                />
+              </g>
             );
           })}
 

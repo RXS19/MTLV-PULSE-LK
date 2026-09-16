@@ -80,11 +80,11 @@ export const Header: React.FC<HeaderProps> = ({
               id="header-sidebar-toggle-btn"
               type="button"
               onClick={onToggleSidebar}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171f] hover:bg-[#1a1e29] border border-[#232836] text-zinc-200 hover:text-white transition-all text-xs font-semibold shadow-xs group cursor-pointer"
+              className="hidden md:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#14171f] hover:bg-[#1a1e29] border border-[#232836] hover:border-zinc-600 text-xs font-medium text-zinc-200 hover:text-white transition-all shadow-xs group cursor-pointer"
               title={isSidebarCollapsed ? 'Expandir menú lateral' : 'Contraer menú (Pantalla completa)'}
             >
               <MotoluvIsotype className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-              <span className="font-black tracking-wider text-white font-display">MOTOLUV</span>
+              <span className="text-xs font-medium text-zinc-200 group-hover:text-white">Motoluv</span>
               {isSidebarCollapsed ? (
                 <PanelLeftOpen className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-400 transition-colors ml-0.5" />
               ) : (
@@ -96,8 +96,8 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="md:hidden flex items-center gap-2">
               <MotoluvIsotype withBackground={true} className="w-5 h-5 shrink-0" />
               <div className="flex items-baseline gap-1">
-                <span className="text-sm font-black tracking-wider text-white font-display">MOTOLUV</span>
-                <span className="text-[9px] font-bold text-red-500 tracking-wider font-tech uppercase px-1 py-0.2 bg-red-950/60 rounded border border-red-800/40">
+                <span className="text-xs font-medium text-zinc-200">Motoluv</span>
+                <span className="text-[9px] font-medium text-red-500 tracking-wider uppercase px-1 py-0.2 bg-red-950/60 rounded border border-red-800/40">
                   PULSE
                 </span>
               </div>
@@ -283,47 +283,70 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Hero Visual Section with Aesthetic Sports Motorcycle Background */}
       <div
         id="pulse-hero-banner"
-        className="relative overflow-hidden border-b border-[#181c24] px-4 sm:px-8 py-7 sm:py-9 min-h-[160px] sm:min-h-[180px] lg:min-h-[200px] flex items-center bg-[#07080b] transition-all duration-300"
+        className="relative overflow-hidden border-b border-[#181c24] px-4 sm:px-8 py-3.5 sm:py-4.5 min-h-[110px] sm:min-h-[125px] lg:min-h-[135px] flex items-center bg-[#07080b] transition-all duration-300"
       >
-        {/* Aesthetic background image layer */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <img
-            src="/images/mercado-estetico-banner.jpg"
-            alt="Motocicleta deportiva"
-            className="w-full h-full object-cover object-right md:object-[center_right] filter brightness-95 contrast-105"
-          />
-          {/* Deep obsidian gradient from left to right so text has pristine contrast and legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#07080b] via-[#07080b]/85 via-40% to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07080b]/90 via-transparent to-[#07080b]/50" />
+        {/* Aesthetic background image layer with seamless progressive transparency */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-end">
+          {/* Ambient atmosphere depth with soft gradient mask */}
+          <div
+            className="absolute inset-y-0 right-0 w-full sm:w-[70%] md:w-[55%] flex items-center justify-end opacity-15 filter blur-2xl pointer-events-none"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 35%, black 100%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 35%, black 100%)',
+            }}
+          >
+            <img
+              src="/images/mercado-estetico-banner.jpg"
+              alt=""
+              className="h-full w-full object-cover object-right"
+            />
+          </div>
+
+          {/* Left subtle obsidian gradient overlay to protect text contrast */}
+          <div className="absolute inset-y-0 left-0 w-full sm:w-[38%] md:w-[32%] bg-gradient-to-r from-[#07080b] via-[#07080b]/80 to-transparent pointer-events-none z-1" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 w-full flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="relative z-10 w-full flex items-center justify-between gap-4">
           <div className="max-w-xl">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <MotoluvIsotype className="w-4 h-4 shrink-0 drop-shadow-[0_0_8px_rgba(238,28,37,0.8)]" />
               <span className="text-[11px] font-extrabold tracking-[0.2em] text-red-500 uppercase font-tech">
                 MOTOLUV ANALYTICS
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wider uppercase font-display italic leading-tight drop-shadow-md">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-wider uppercase font-tech leading-tight drop-shadow-md">
               Mercado En Movimiento
             </h1>
-
-            <p className="text-xs sm:text-sm text-zinc-300 mt-2 font-normal tracking-normal max-w-md">
-              Visión ejecutiva para decisiones que aceleran.
-            </p>
           </div>
 
-          {/* Right Brand Pillar Tag matching reference image IMG_7692.jpeg */}
-          <div className="hidden sm:flex flex-col items-end text-right">
-            <div className="flex flex-col gap-1 text-xs font-bold tracking-widest text-zinc-300 font-tech">
-              <span>CONFIANZA</span>
-              <span>DATOS</span>
-              <span>MOVIMIENTO</span>
+          {/* Right Section: Pillar Block right where the transparency mask starts, followed by the motorcycle image */}
+          <div className="flex items-center shrink-0">
+            {/* The text "CONFIANZA DATOS MOVIMIENTO" */}
+            <div className="flex flex-col items-end text-right shrink-0 z-10">
+              <div className="flex flex-col gap-0.5 text-[10px] sm:text-[11px] font-bold tracking-widest text-zinc-300 font-neo-grotesk">
+                <span>CONFIANZA</span>
+                <span>DATOS</span>
+                <span>MOVIMIENTO</span>
+              </div>
+              <div className="w-5 h-0.5 bg-red-600 rounded-full mt-1.5 self-end shadow-[0_0_8px_rgba(255,30,39,0.8)]" />
             </div>
-            <div className="w-6 h-0.5 bg-red-600 rounded-full mt-2 self-end shadow-[0_0_8px_rgba(255,30,39,0.8)]" />
+
+            {/* Motorcycle image with its transparency mask starting right at this point */}
+            <div
+              className="h-20 sm:h-24 lg:h-28 w-auto shrink-0 flex items-center pointer-events-none -ml-1 sm:-ml-2"
+              style={{
+                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 10%, black 22%, black 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 10%, black 22%, black 100%)',
+              }}
+            >
+              <img
+                src="/images/mercado-estetico-banner.jpg"
+                alt="Mercado En Movimiento"
+                className="h-full w-auto object-contain object-right filter brightness-100 contrast-105"
+              />
+            </div>
           </div>
         </div>
       </div>

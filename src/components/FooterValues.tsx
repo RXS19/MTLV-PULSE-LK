@@ -49,11 +49,11 @@ export const FooterValues: React.FC = () => {
 
       <div className="relative z-10 py-5 px-6 sm:px-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         {/* Left Official Slogan (Stacked) */}
-        <div className="shrink-0 flex items-center">
-          <div className="text-xl sm:text-2xl font-black tracking-wider uppercase font-display italic leading-[1.1] select-none">
-            <div className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">SUBE.</div>
-            <div className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">CONECTA.</div>
-            <div className="text-red-500 drop-shadow-[0_2px_6px_rgba(239,68,68,0.4)]">RUEDA.</div>
+        <div className="shrink-0 flex items-center font-neo-grotesk">
+          <div className="text-xl sm:text-2xl font-bold tracking-[0.16em] uppercase font-neo-grotesk leading-[1.15] select-none">
+            <div className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">SUBE</div>
+            <div className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">CONECTA</div>
+            <div className="text-red-500 drop-shadow-[0_2px_6px_rgba(239,68,68,0.4)]">RUEDA</div>
           </div>
         </div>
 
@@ -82,15 +82,15 @@ export const FooterValues: React.FC = () => {
         </div>
 
         {/* Right Motto Callout with red vertical accent bar */}
-        <div className="shrink-0 pl-0 xl:pl-5 xl:border-l-2 xl:border-red-600 flex flex-col justify-center select-none">
-          <p className="text-xs sm:text-[13px] font-black tracking-wider text-white uppercase font-display leading-tight drop-shadow-sm">
+        <div className="shrink-0 pl-0 xl:pl-5 xl:border-l-2 xl:border-red-600 flex flex-col justify-center select-none font-neo-grotesk">
+          <p className="text-[11px] sm:text-xs font-bold tracking-widest text-white uppercase font-neo-grotesk leading-tight drop-shadow-sm">
             EL PRÓXIMO
           </p>
-          <p className="text-xs sm:text-[13px] font-black tracking-wider text-white uppercase font-display leading-tight drop-shadow-sm">
+          <p className="text-[11px] sm:text-xs font-bold tracking-widest text-white uppercase font-neo-grotesk leading-tight drop-shadow-sm">
             KILÓMETRO
           </p>
-          <p className="text-xs sm:text-[13px] font-black tracking-wider text-white uppercase font-display leading-tight drop-shadow-sm">
-            TAMBIÉN ES TUYO.
+          <p className="text-[11px] sm:text-xs font-bold tracking-widest text-white uppercase font-neo-grotesk leading-tight drop-shadow-sm">
+            ES TUYO.
           </p>
         </div>
       </div>

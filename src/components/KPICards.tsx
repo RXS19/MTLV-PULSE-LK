@@ -136,7 +136,7 @@ export const KPICards: React.FC<KPICardsProps> = ({
                         <div className="flex items-center gap-1 font-bold text-xs sm:text-sm">
                           {data.changePercent !== null ? (
                             isUp ? (
-                              <span className="text-blue-400 flex items-center font-extrabold">
+                              <span className="text-emerald-400 flex items-center font-extrabold">
                                 <span className="mr-0.5 text-base leading-none">↑</span>
                                 {Math.abs(data.changePercent)}%
                               </span>
@@ -146,7 +146,7 @@ export const KPICards: React.FC<KPICardsProps> = ({
                                 {Math.abs(data.changePercent)}%
                               </span>
                             ) : (
-                              <span className="text-zinc-400 flex items-center font-bold">
+                              <span className="text-blue-400 flex items-center font-bold">
                                 <span className="mr-0.5">−</span>
                                 0.0%
                               </span>
@@ -162,12 +162,12 @@ export const KPICards: React.FC<KPICardsProps> = ({
 
                       {/* Right: Dynamic Wave Sparkline (Centered vertically, constrained so it never overlaps any text) */}
                       {(() => {
-                        const strokeColor = isUp ? '#3b82f6' : isDown ? '#ef4444' : '#71717a';
+                        const strokeColor = isUp ? '#22c55e' : isDown ? '#ef4444' : '#3b82f6';
                         const glowColor = isUp
-                          ? 'drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]'
+                          ? 'drop-shadow-[0_0_4px_rgba(34,197,94,0.6)]'
                           : isDown
                           ? 'drop-shadow-[0_0_4px_rgba(239,68,68,0.6)]'
-                          : '';
+                          : 'drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]';
 
                         const linePath = isDown
                           ? 'M 0 6 L 8 10 L 15 8 L 26 16 L 35 14 L 46 22 L 56 20 L 68 28 L 73 27 L 80 32'

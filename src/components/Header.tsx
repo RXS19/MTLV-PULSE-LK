@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="filter-period"
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#14171f] border border-[#232836] text-xs font-medium text-zinc-200 shadow-xs shrink-0"
             >
-              <Calendar className="w-3.5 h-3.5 text-red-500 shrink-0" />
+              <Calendar className="w-3.5 h-3.5 text-white shrink-0" />
               <select
                 id="period-select"
                 value={selectedPeriod}
@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="bg-transparent border-none text-zinc-200 text-xs font-medium focus:outline-hidden cursor-pointer"
               >
                 <option value="all" className="bg-[#14171f] text-zinc-200">
-                  Todo el histórico
+                  Histórico
                 </option>
                 <option value="7d" className="bg-[#14171f] text-zinc-200">
                   Últimos 7 días
@@ -237,7 +237,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#14171f] border border-[#232836] text-xs font-mono shadow-xs"
               title="Fecha y hora de la última actualización de métricas"
             >
-              <Clock className="w-3.5 h-3.5 text-red-500 shrink-0" />
+              <Clock className="w-3.5 h-3.5 text-white shrink-0" />
               <span className="text-zinc-200 text-[11px] font-medium">{formattedDateTime}</span>
             </div>
 
@@ -309,15 +309,15 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Content */}
         <div className="relative z-10 w-full flex items-center justify-between gap-4">
           <div className="max-w-xl">
-            <div className="flex items-center gap-2 mb-1.5">
-              <MotoluvIsotype className="w-4 h-4 shrink-0 drop-shadow-[0_0_8px_rgba(238,28,37,0.8)]" />
+            <div className="mb-1.5">
               <span className="text-[11px] font-extrabold tracking-[0.2em] text-red-500 uppercase font-tech">
-                MOTOLUV ANALYTICS
+                MERCADO EN MOVIMIENTO
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-wider uppercase font-tech leading-tight drop-shadow-md">
-              Mercado En Movimiento
+            <h1 className="flex items-center gap-2.5 text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-wider uppercase font-tech leading-tight drop-shadow-md">
+              <MotoluvIsotype className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 drop-shadow-[0_0_10px_rgba(238,28,37,0.8)]" />
+              <span>MOTOLUV ANALYTICS</span>
             </h1>
           </div>
 

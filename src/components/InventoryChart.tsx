@@ -8,7 +8,6 @@ import {
   AlertCircle,
   CheckCircle2,
   RefreshCw,
-  Info,
 } from 'lucide-react';
 
 interface InventoryChartProps {
@@ -107,7 +106,7 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
             MOTOS EN INVENTARIO
           </h3>
           <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
-            Inventario real • Cada motocicleta pertenece estrictamente a 1 estado sin duplicación
+            Inventario real • Cada motocicleta pertenece a 1 estado
           </p>
         </div>
 
@@ -370,18 +369,12 @@ export const InventoryChart: React.FC<InventoryChartProps> = ({
         </div>
       )}
 
-      {/* Footer Notes & Integrity Guarantees */}
-      <div className="pt-3 border-t border-[#1a1e27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[10px] text-zinc-400">
-        <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-          <span>
-            Garantía de integridad: Cada motocicleta se contabiliza una única vez según su estado.
-          </span>
-        </div>
-        <div className="flex items-center gap-1 text-zinc-400 font-mono shrink-0">
-          <Info className="w-3 h-3 text-zinc-400" />
-          <span>Suma de gajos = {totalUniqueMotos} motos (100%)</span>
-        </div>
+      {/* Footer Notes */}
+      <div className="pt-3 border-t border-[#1a1e27] flex items-center gap-1.5 text-[10px] text-zinc-400">
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        <span>
+          Cada motocicleta se contabiliza una única vez según su estado.
+        </span>
       </div>
     </div>
   );

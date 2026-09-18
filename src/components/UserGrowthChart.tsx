@@ -66,11 +66,11 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
   const yTicks = [effectiveTop, (effectiveTop * 2) / 3, effectiveTop / 3, 0];
 
   const chartWidth = 620;
-  const chartHeight = 240;
+  const chartHeight = 230;
   const paddingLeft = 45;
   const paddingRight = 16;
   const paddingTop = 15;
-  const paddingBottom = 34;
+  const paddingBottom = 26;
 
   const innerWidth = chartWidth - paddingLeft - paddingRight;
   const innerHeight = chartHeight - paddingTop - paddingBottom;
@@ -266,7 +266,7 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
             );
           })}
 
-          {/* X Axis: Enumerated Days (e.g. "Día 1", "Día 2", etc.) and Date ("13 sep", "14 sep", etc.) */}
+          {/* X Axis: Date labels (e.g. "13 sep", "14 sep", etc.) */}
           {data.map((d, i) => {
             const shouldRenderLabel =
               pointsCount <= 14 ||
@@ -280,44 +280,26 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
             const isHovered = hoveredIdx === i;
 
             return (
-              <g key={`date-group-${i}`}>
-                {/* Enumerated day label: "Día 1", "Día 2", etc. */}
-                <text
-                  x={x}
-                  y={chartHeight - 16}
-                  textAnchor="middle"
-                  fill={isHovered ? '#f87171' : '#64748b'}
-                  fontSize="10"
-                  fontWeight="600"
-                  fontFamily="sans-serif"
-                  className="transition-colors"
-                >
-                  {d.dayLabel || `Día ${d.dayIndex ?? i + 1}`}
-                </text>
-
-                {/* Calendar date: "13 sep", "14 sep", etc. */}
-                <text
-                  x={x}
-                  y={chartHeight - 4}
-                  textAnchor="middle"
-                  fill={isHovered ? '#ffffff' : '#cbd5e1'}
-                  fontSize="11"
-                  fontWeight="500"
-                  fontFamily="sans-serif"
-                  className="transition-colors"
-                >
-                  {d.displayDate}
-                </text>
-              </g>
+              <text
+                key={`date-${i}`}
+                x={x}
+                y={chartHeight - 6}
+                textAnchor="middle"
+                fill={isHovered ? '#ffffff' : '#8e9bb0'}
+                fontSize="11"
+                fontWeight={isHovered ? '600' : '400'}
+                fontFamily="sans-serif"
+                className="transition-colors"
+              >
+                {d.displayDate}
+              </text>
             );
           })}
         </svg>
 
-        {/* Floating Tooltip with enumerated day, date, new users and cumulative total */}
+        {/* Floating Tooltip with date, new users and cumulative total */}
         {hoveredIdx !== null && data[hoveredIdx] && (
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-[#181b22] border border-white/15 px-3 py-1.5 rounded-lg shadow-xl text-xs z-30 pointer-events-none flex items-center gap-2 sm:gap-3 whitespace-nowrap">
-            <span className="font-bold text-red-400">{data[hoveredIdx].dayLabel || `Día ${data[hoveredIdx].dayIndex ?? hoveredIdx + 1}`}</span>
-            <span className="text-zinc-500">•</span>
             <span className="font-semibold text-zinc-200">{data[hoveredIdx].displayDate}:</span>
             <span className={data[hoveredIdx].newUsers > 0 ? "text-red-400 font-bold" : "text-zinc-400"}>
               +{data[hoveredIdx].newUsers} nuevos

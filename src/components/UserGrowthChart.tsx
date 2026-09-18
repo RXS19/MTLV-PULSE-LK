@@ -66,11 +66,11 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
   const yTicks = [effectiveTop, (effectiveTop * 2) / 3, effectiveTop / 3, 0];
 
   const chartWidth = 620;
-  const chartHeight = 230;
+  const chartHeight = 240;
   const paddingLeft = 45;
   const paddingRight = 16;
   const paddingTop = 15;
-  const paddingBottom = 28;
+  const paddingBottom = 34;
 
   const innerWidth = chartWidth - paddingLeft - paddingRight;
   const innerHeight = chartHeight - paddingTop - paddingBottom;
@@ -105,9 +105,14 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
       <div className="flex items-start justify-between gap-4 mb-2">
         {/* Left: Title & Legend */}
         <div>
-          <h3 className="text-sm sm:text-base font-bold tracking-wider text-white uppercase font-sans">
-            CRECIMIENTO DE USUARIOS
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <h3 className="text-sm sm:text-base font-bold tracking-wider text-white uppercase font-sans">
+              CRECIMIENTO DE USUARIOS
+            </h3>
+            <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/5 text-zinc-400 border border-white/10">
+              Corte 00:00 CDMX
+            </span>
+          </div>
           <div className="flex items-center gap-5 mt-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2 text-zinc-300">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0" />
@@ -165,13 +170,13 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
             );
           })}
 
-          {/* Subtle Vertical Grid Lines (one per X-axis date tick) */}
+          {/* Subtle Vertical Grid Lines (one per day tick) */}
           {data.map((d, i) => {
             const shouldRenderTick =
-              pointsCount <= 10 ||
+              pointsCount <= 14 ||
               i === 0 ||
               i === pointsCount - 1 ||
-              i % Math.ceil(pointsCount / 6) === 0;
+              i % Math.ceil(pointsCount / 7) === 0;
 
             if (!shouldRenderTick) return null;
 
@@ -183,33 +188,31 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
                 y1={paddingTop}
                 x2={x}
                 y2={paddingTop + innerHeight}
-                stroke="#171b24"
-                strokeWidth="1"
+                stroke={hoveredIdx === i ? '#334155' : '#171b24'}
+                strokeWidth={hoveredIdx === i ? '1.5' : '1'}
+                strokeDasharray={hoveredIdx === i ? '2 2' : undefined}
               />
             );
           })}
 
-          {/* Bars: Daily/Periodic New Users (Solid Red, aligned at bottom) */}
+          {/* Interactive column hit areas (available for all days, even with 0 new users) */}
           {data.map((d, i) => {
             const xCenter = paddingLeft + (pointsCount > 1 ? i * stepX : innerWidth / 2);
             const barWidth = Math.max(4, Math.min(8, (innerWidth / pointsCount) * 0.55));
             const x = xCenter - barWidth / 2;
 
-            // Altura exacta y real según la escala del eje Y (si hay 3, llega exactamente al 3)
             const barHeight = d.newUsers > 0 ? (d.newUsers / effectiveTop) * innerHeight : 0;
             const y = paddingTop + innerHeight - barHeight;
             const isHovered = hoveredIdx === i;
 
-            if (barHeight <= 0) return null;
-
             return (
               <g key={`bar-group-${i}`}>
-                {/* Wider transparent hit area for easy tapping on mobile */}
+                {/* Wide transparent hit area covering the entire column height */}
                 <rect
-                  x={xCenter - Math.max(12, stepX / 2)}
+                  x={xCenter - Math.max(14, stepX / 2)}
                   y={paddingTop}
-                  width={Math.max(24, stepX)}
-                  height={innerHeight}
+                  width={Math.max(28, stepX)}
+                  height={innerHeight + paddingBottom}
                   fill="transparent"
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredIdx(i)}
@@ -217,16 +220,20 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
                   onTouchStart={() => setHoveredIdx(i)}
                   onClick={() => setHoveredIdx(hoveredIdx === i ? null : i)}
                 />
-                <rect
-                  key={`bar-${i}`}
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barHeight}
-                  rx={0.5}
-                  fill={isHovered ? '#ff3b44' : '#e50914'}
-                  className="cursor-pointer transition-colors pointer-events-none"
-                />
+
+                {/* Bar rendered when newUsers > 0 */}
+                {barHeight > 0 && (
+                  <rect
+                    key={`bar-${i}`}
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={barHeight}
+                    rx={0.5}
+                    fill={isHovered ? '#ff3b44' : '#e50914'}
+                    className="cursor-pointer transition-colors pointer-events-none"
+                  />
+                )}
               </g>
             );
           })}
@@ -241,62 +248,80 @@ export const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
             strokeLinejoin="round"
           />
 
-          {/* Endpoint Dot: Single white circle at the final point (exact match to image) */}
-          {linePoints.length > 0 && (
-            <circle
-              cx={linePoints[linePoints.length - 1].x}
-              cy={linePoints[linePoints.length - 1].y}
-              r="4"
-              fill="#cbd5e1"
-              stroke="#ffffff"
-              strokeWidth="1"
-            />
-          )}
+          {/* Subtle node dots along the cumulative line for each day */}
+          {linePoints.map((pt, idx) => {
+            const isLast = idx === linePoints.length - 1;
+            const isCurrentHover = hoveredIdx === idx;
+            return (
+              <circle
+                key={`line-point-${idx}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={isCurrentHover ? 5 : isLast ? 4 : 2.5}
+                fill={isCurrentHover ? '#ffffff' : isLast ? '#cbd5e1' : '#64748b'}
+                stroke={isCurrentHover ? '#e50914' : isLast ? '#ffffff' : '#0d0f14'}
+                strokeWidth={isCurrentHover ? 2 : 1}
+                className="pointer-events-none transition-all"
+              />
+            );
+          })}
 
-          {/* Hover interactive circle */}
-          {hoveredIdx !== null && linePoints[hoveredIdx] && (
-            <circle
-              cx={linePoints[hoveredIdx].x}
-              cy={linePoints[hoveredIdx].y}
-              r="5"
-              fill="#ffffff"
-              stroke="#e50914"
-              strokeWidth="2"
-            />
-          )}
-
-          {/* X Axis Date labels (formatted like "1 ago", "8 ago", etc.) */}
+          {/* X Axis: Enumerated Days (e.g. "Día 1", "Día 2", etc.) and Date ("13 sep", "14 sep", etc.) */}
           {data.map((d, i) => {
             const shouldRenderLabel =
-              pointsCount <= 10 ||
+              pointsCount <= 14 ||
               i === 0 ||
               i === pointsCount - 1 ||
-              i % Math.ceil(pointsCount / 6) === 0;
+              i % Math.ceil(pointsCount / 7) === 0;
 
             if (!shouldRenderLabel) return null;
 
             const x = paddingLeft + (pointsCount > 1 ? i * stepX : innerWidth / 2);
+            const isHovered = hoveredIdx === i;
+
             return (
-              <text
-                key={`date-${i}`}
-                x={x}
-                y={chartHeight - 6}
-                textAnchor="middle"
-                fill="#8e9bb0"
-                fontSize="11"
-                fontFamily="sans-serif"
-              >
-                {d.displayDate}
-              </text>
+              <g key={`date-group-${i}`}>
+                {/* Enumerated day label: "Día 1", "Día 2", etc. */}
+                <text
+                  x={x}
+                  y={chartHeight - 16}
+                  textAnchor="middle"
+                  fill={isHovered ? '#f87171' : '#64748b'}
+                  fontSize="10"
+                  fontWeight="600"
+                  fontFamily="sans-serif"
+                  className="transition-colors"
+                >
+                  {d.dayLabel || `Día ${d.dayIndex ?? i + 1}`}
+                </text>
+
+                {/* Calendar date: "13 sep", "14 sep", etc. */}
+                <text
+                  x={x}
+                  y={chartHeight - 4}
+                  textAnchor="middle"
+                  fill={isHovered ? '#ffffff' : '#cbd5e1'}
+                  fontSize="11"
+                  fontWeight="500"
+                  fontFamily="sans-serif"
+                  className="transition-colors"
+                >
+                  {d.displayDate}
+                </text>
+              </g>
             );
           })}
         </svg>
 
-        {/* Floating Tooltip */}
+        {/* Floating Tooltip with enumerated day, date, new users and cumulative total */}
         {hoveredIdx !== null && data[hoveredIdx] && (
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-[#181b22] border border-white/10 px-3 py-1.5 rounded-lg shadow-xl text-xs z-30 pointer-events-none flex items-center gap-3">
-            <span className="font-semibold text-zinc-300">{data[hoveredIdx].displayDate}:</span>
-            <span className="text-red-400 font-bold">+{data[hoveredIdx].newUsers} nuevos</span>
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-[#181b22] border border-white/15 px-3 py-1.5 rounded-lg shadow-xl text-xs z-30 pointer-events-none flex items-center gap-2 sm:gap-3 whitespace-nowrap">
+            <span className="font-bold text-red-400">{data[hoveredIdx].dayLabel || `Día ${data[hoveredIdx].dayIndex ?? hoveredIdx + 1}`}</span>
+            <span className="text-zinc-500">•</span>
+            <span className="font-semibold text-zinc-200">{data[hoveredIdx].displayDate}:</span>
+            <span className={data[hoveredIdx].newUsers > 0 ? "text-red-400 font-bold" : "text-zinc-400"}>
+              +{data[hoveredIdx].newUsers} nuevos
+            </span>
             <span className="text-zinc-500">|</span>
             <span className="text-white font-bold">{data[hoveredIdx].cumulativeUsers} acumulados</span>
           </div>

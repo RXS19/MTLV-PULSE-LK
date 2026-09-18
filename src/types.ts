@@ -78,6 +78,8 @@ export interface KPIValue {
 export interface UserGrowthPoint {
   date: string;
   displayDate: string;
+  dayIndex?: number;
+  dayLabel?: string;
   newUsers: number;
   cumulativeUsers: number;
 }

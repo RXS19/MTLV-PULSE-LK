@@ -105,6 +105,8 @@ export interface DashboardMetricsResult {
   userGrowth: Array<{
     date: string;
     displayDate: string;
+    dayIndex?: number;
+    dayLabel?: string;
     newUsers: number;
     cumulativeUsers: number;
   }>;
@@ -319,6 +321,7 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
     };
 
     // User growth series starting from 13 de septiembre de 2026
+    // Advances each day at 00:00 (America/Mexico_City) even if new users = 0
     try {
       const baseBeforeSep13Res = await executeReadOnlyQuery<{ count: string }>(`
         SELECT COUNT(*)::text as count
@@ -329,21 +332,36 @@ export async function fetchDashboardMetrics(filters: AnalyticsFilters = {}): Pro
 
       const dailyGrowthRes = await executeReadOnlyQuery<{ day_str: string; new_users: string }>(`
         SELECT 
-          TO_CHAR((created_at AT TIME ZONE 'America/Mexico_City')::date, 'YYYY-MM-DD') as day_str,
-          COUNT(*)::text as new_users
-        FROM public.users
-        WHERE (created_at AT TIME ZONE 'America/Mexico_City') >= '2026-09-13 00:00:00'::timestamp
-        GROUP BY (created_at AT TIME ZONE 'America/Mexico_City')::date
-        ORDER BY (created_at AT TIME ZONE 'America/Mexico_City')::date ASC;
+          TO_CHAR(d::date, 'YYYY-MM-DD') as day_str,
+          COALESCE(u.new_users, 0)::text as new_users
+        FROM generate_series(
+          '2026-09-13'::date,
+          GREATEST('2026-09-13'::date, (NOW() AT TIME ZONE 'America/Mexico_City')::date),
+          '1 day'::interval
+        ) d
+        LEFT JOIN (
+          SELECT 
+            (created_at AT TIME ZONE 'America/Mexico_City')::date as user_date,
+            COUNT(*) as new_users
+          FROM public.users
+          WHERE (created_at AT TIME ZONE 'America/Mexico_City') >= '2026-09-13 00:00:00'::timestamp
+          GROUP BY (created_at AT TIME ZONE 'America/Mexico_City')::date
+        ) u ON u.user_date = d::date
+        ORDER BY d::date ASC;
       `);
 
-      baseResult.userGrowth = dailyGrowthRes.map((row) => {
+      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+      baseResult.userGrowth = dailyGrowthRes.map((row, idx) => {
         const newCount = parseInt(row.new_users, 10);
         runningCumulative += newCount;
         const [yr, mo, dy] = row.day_str.split('-');
+        const dayNumber = idx + 1;
         return {
           date: row.day_str,
-          displayDate: `${parseInt(dy, 10)} ${['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][parseInt(mo, 10) - 1]}`,
+          displayDate: `${parseInt(dy, 10)} ${monthNames[parseInt(mo, 10) - 1]}`,
+          dayIndex: dayNumber,
+          dayLabel: `Día ${dayNumber}`,
           newUsers: newCount,
           cumulativeUsers: runningCumulative,
         };
